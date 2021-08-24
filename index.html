@@ -18,6 +18,8 @@
             nav {
                 background: rgb(128, 0, 128);
                 margin: 0 auto;
+                margin-bottom: 20px;
+                border-radius: 30px;
                 display: flex;
                 padding: 10px;
             }
@@ -42,15 +44,18 @@
         
             /* main container area beneath menu */
             main {
-                background: rgb(245, 238, 219);
+                background: rgb(255, 246, 222);
                 display: flex;
+                border-radius: 30px;
             }
             .sidebar {
                 margin-right: 25px;
                 padding: 10px;
             }
             .sidebar-img {
-                width: 200px;
+               width: 200px;
+                border: 4px silver ridge;
+                border-radius: 30px;
             }
             .content {
                 flex: 1;
@@ -59,6 +64,7 @@
             #interests {
                 border: 4px silver ridge;
                 padding: 8px;
+                border-radius: 30px;
             }
             h2, h3 {
                 margin: 0px;
@@ -68,14 +74,14 @@
 
     <body>
         <!-- All content belongs here-->
-        <div>
-            <nav>
+        <div id="all-contents">
+            <nav id="nav-ul">
                 <h1>Owen's Website</h1>
                 <ul>
-                    <li>
+                    <li class="nav-li">
                         <a href="index.html"> Home </a>
                     </li>
-                    <li>
+                    <li class="nav-li">
                         <a hreft="portfolio.html"> Portfolio </a>
                     </li>
                 </ul>
@@ -83,16 +89,16 @@
 
             <main>
                 <!-- side bar-->
-                <div>
+                <div class="sidebar">
                     <!-- Fix this image link!!-->
-                    <img src="https://bloximages.newyork1.vip.townnews.com/lsureveille.com/content/tncms/assets/v3/editorial/f/99/f998137c-e8b4-11e9-bfb5-4b6fbd11207b/5d9ab4f714b0f.image.jpg"
+                    <img class="sidebar-img" src="https://bloximages.newyork1.vip.townnews.com/lsureveille.com/content/tncms/assets/v3/editorial/f/99/f998137c-e8b4-11e9-bfb5-4b6fbd11207b/5d9ab4f714b0f.image.jpg">
                 </div>
                 <!-- content bar-->
-                <div>
+                <div class="content">
                     <h2> Owen Schock </h2>
                     <p> Sophmore at Mandeville High School </p> 
                     <!-- Interests section-->
-                    <div>
+                    <div id="interests">
                         <h3> Interests </h3>
                         <ul>
                             <li> LSU Football </li>
