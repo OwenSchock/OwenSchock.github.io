@@ -8,7 +8,9 @@
 		.box {
 			width: 70px;
 			height: 70px;
-			background-color: gold;
+			background-image: url(https://www.pngkey.com/png/full/565-5656638_new-york-giants-football-players-png.png);
+			background-repeat: no-repeat;
+			background-size: contain;
 			font-size: 300%;
 			text-align: center;
 			display: block;
@@ -18,7 +20,10 @@
 		}
 		.board{
 			height: 100vh;
-		}
+			background-image: url(https://s159.podbean.com/pb/5101d0b4ab3066c65bed63e1b047b0cf/615c8430/data2/fs64/540946/uploads/SuperBowl1Alt.png?pbss=1b9cded5-4d01-57fc-82e8-29e0f4b82a2f);
+			background-repeat: no-repeat;
+			background-size: contain;
+		} 
 	</style>
 	<!-- 	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> -->
 
@@ -74,7 +79,11 @@
 			function update() {
 				positionX = positionX + speed;
 				moveBoxTo(positionX)
-
+				if (positionX > boardWidth) {
+					speed = -speed;
+				} else if (positionX <= 0) {
+					speed = speed * -1;
+				};
 			};
 
 			/* 
@@ -86,7 +95,11 @@
 				positionX = 0;
 				points = points + 1
 				changeBoxText(points);
-				speed = speed + 3;
+				if (speed === speed) {
+					speed += 3;
+				} else if (speed === -speed) {
+					speed -= 3;
+				};
 
 
 			};
