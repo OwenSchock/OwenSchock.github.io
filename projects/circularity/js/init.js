@@ -67,7 +67,7 @@ var init = function (window) {
                 physikz.updatePosition(eachCircle)
                 // code to repeat using eachValue
             }
-            game.checkCirclePosition(eachCircle)
+            game.checkCirclePosition(eachCircle);
             
         }
        
