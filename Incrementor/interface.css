@@ -16,8 +16,7 @@
     background-repeat: no-repeat;
     background-size: contain;
     border: 4px rgb(212, 175, 55) ridge;
-    padding: 80px;
-    border-radius: 50%;
+    padding: 100px;
     color:white
 }
 #firstHeader {
@@ -40,7 +39,6 @@
     background-repeat: no-repeat;
     border: 4px rgb(212, 175, 55) ridge;
     padding: 80px;
-    border-radius: 50%;
     background-position: center;
     color:white
 }

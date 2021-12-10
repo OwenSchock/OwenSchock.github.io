@@ -29,18 +29,21 @@ window.setInterval(function(){
 var seasonTicketHolders = 0;
 
 function buySeasonTicketHolders(){
-    var sthCost = Math.floor(500 * Math.pow(1.1,seasonTicketHolders));     //works out the cost of this cursor
-    if(footballs >= sthCost){                                   //checks that the player can afford the cursor
-        seasonTicketHolders = seasonTicketHolders + 1;            //increases number of fans
-    	footballs = footballs - sthCost;                          //removes the footballs spent
-        document.getElementById('seasonTicketHolders').innerHTML = seasonTicketHolders;  //updates the number of fans for the user
-        document.getElementById('footballs').innerHTML = footballs;  //updates the number of footballs for the user
+    var sthCost = Math.floor(500 * Math.pow(1.1,seasonTicketHolders));     
+    if(footballs >= sthCost){                                   
+        seasonTicketHolders = seasonTicketHolders + 1;           
+    	footballs = footballs - sthCost;                          
+        document.getElementById('seasonTicketHolders').innerHTML = seasonTicketHolders;  
+        document.getElementById('footballs').innerHTML = footballs;  
     };
-    var nextCost = Math.floor(500 * Math.pow(1.1,seasonTicketHolders));       //works out the cost of the next cursor
-    document.getElementById('sthCost').innerHTML = nextCost;  //updates the cursor cost for the user
+    var nextCost = Math.floor(500 * Math.pow(1.1,seasonTicketHolders));       
+    document.getElementById('sthCost').innerHTML = nextCost; 
 };
 window.setInterval(function(){
 	
 	footballClick(seasonTicketHolders);
 	
-}, 1000);
+}, 200);
+
+
+
