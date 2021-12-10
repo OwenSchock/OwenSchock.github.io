@@ -6,22 +6,50 @@
     text-align: center;
 }
 #people {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: yellow;    
+}
+#foamFinger {
     background-image:url(https://www.kindpng.com/picc/m/51-511409_foam-finger-transparent-background-hd-png-download.png);
     background-repeat: no-repeat;
     background-size: contain;
     border: 4px rgb(212, 175, 55) ridge;
     padding: 80px;
-    border-radius: 800px;
-    background-position: center;
-    
+    border-radius: 50%;
+    color:white
 }
 #firstHeader {
     text-align: center;
+    font-family: 'Times New Roman', Times, serif;
 }
 
 #body {
     background-color: skyblue;
+    background-image: url(https://static0.thesportsterimages.com/wordpress/wp-content/uploads/2018/12/ATT-Stadium-webquest.jpg?q=50&fit=crop&w=1710&dpr=1.5);
+    background-repeat: no-repeat;
+    background-size: cover;
     
+    
+}
+#sth {
+    background-image: url(https://www.awesomeinventions.com/wp-content/uploads/2016/02/fan-head.jpg);
+    background-size: contain;
+    background-size: cover;
+    background-repeat: no-repeat;
+    border: 4px rgb(212, 175, 55) ridge;
+    padding: 80px;
+    border-radius: 50%;
+    background-position: center;
+    color:white
+}
+
+#div2 {
+    color: yellow;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 #picture {

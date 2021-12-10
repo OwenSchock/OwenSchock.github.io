@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
-    <title>Owen's Football Manager</title>
+    <title>Owen's NFL Manager</title>
 	<head>
 		<link rel="stylesheet" type="text/css" href="interface.css" />
 	</head>
 	<body id = "body">
-		<h1 id = "firstHeader"> Football Manager </h1>
+		<h1 id = "firstHeader"> NFL Manager </h1>
         <br/>
         <br/>
         <br/>
@@ -15,13 +15,20 @@
         <br/>
 		Footballs: <span id="footballs">0</span>
         </div>
-        <div>
-		<button id = "people" onclick="buyFans()">Buy Fan</button>
+        <div id = "people">
+		<button id = "foamFinger" onclick="buyFans()">Buy Fan</button>
 		<br/>
 		Fans: <span id="fans">0</span>
 		<br/>
 		Fans Cost: <span id="fanCost">10</span>
     </div>
+		<div id = "div2">
+			<button id = "sth" onclick="buySeasonTicketHolders()">Buy Season Ticket Holders</button>
+			<br/>
+			Season Ticket Holders: <span id= "seasonTicketHolders">0</span>
+			<br/>
+			Season Ticket Holder Cost: <span id="sthCost">500</span>
+		</div>
 
 		<script type="text/javascript" src="main.js"></script>
 	</body>
