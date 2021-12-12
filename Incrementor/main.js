@@ -25,25 +25,24 @@ window.setInterval(function(){
 	
 }, 1000);
 
-
 var seasonTicketHolders = 0;
 
 function buySeasonTicketHolders(){
-    var sthCost = Math.floor(500 * Math.pow(1.1,seasonTicketHolders));     
+    var sthCost = Math.floor(300 * Math.pow(1.1,seasonTicketHolders));     
     if(footballs >= sthCost){                                   
         seasonTicketHolders = seasonTicketHolders + 1;           
     	footballs = footballs - sthCost;                          
         document.getElementById('seasonTicketHolders').innerHTML = seasonTicketHolders;  
         document.getElementById('footballs').innerHTML = footballs;  
     };
-    var nextCost = Math.floor(500 * Math.pow(1.1,seasonTicketHolders));       
+    var nextCost = Math.floor(300 * Math.pow(1.1,seasonTicketHolders));       
     document.getElementById('sthCost').innerHTML = nextCost; 
 };
 window.setInterval(function(){
 	
 	footballClick(seasonTicketHolders);
 	
-}, 200);
+}, 100);
 
 
 
