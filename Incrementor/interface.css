@@ -1,6 +1,6 @@
 #footballs {
     font-family:'Courier New', Courier, monospace;
-    color:rgb(250, 248, 248)
+    color:blue
 }
 #div {
     text-align: justify;
@@ -8,7 +8,7 @@
 }
 #people {
     position: absolute;
-    top: 0;
+    top: 100px;
     right: 0;
     color: yellow;    
 }
@@ -47,7 +47,7 @@
 #div2 {
     color: yellow;
     position: absolute;
-    top: 0;
+    top: 100px;
     left: 0;
 }
 
@@ -61,4 +61,19 @@
                 padding: 100px;
                 border-radius: 30px;
     
+}
+#nav-ul {
+    list-style-image: none;
+}
+.nav-li {
+    display: inline-block;
+    padding: 0 10px;
+}
+nav {
+    background: rgb(248, 245, 248);
+    margin: 0 auto;
+    margin-bottom: 20px;
+    border-radius: 30px;
+    display: flex;
+    padding: 10px;
 }
