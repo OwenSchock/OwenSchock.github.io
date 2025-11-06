@@ -1,0 +1,3676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Island Flight</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Hide scrollbars */
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- UI Overlays --- */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            z-index: 10;
+            text-align: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay-box {
+            background-color: rgba(20, 20, 20, 0.85);
+            padding: 30px 50px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            max-width: 600px; /* Wider for new UI */
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .overlay-box h1 {
+            margin: 0 0 10px 0;
+            font-size: 3em;
+            font-weight: 700;
+        }
+        
+        .overlay-box h2 {
+            margin: 0 0 25px 0;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #ff4d4d; /* Red */
+        }
+        
+        .overlay-box h2.minigame-title {
+            color: #4da6ff; /* Blue */
+        }
+
+        .overlay-box h2.job-title {
+            color: #ffc107; /* Gold */
+        }
+        
+        .overlay-box h2.volcano-title {
+            color: #ff8c00; /* Dark Orange */
+        }
+        
+        .overlay-box h2.desert-title {
+            color: #FADDAA; /* Sandy */
+        }
+        
+        .overlay-box h2.lighthouse-title {
+            color: #e6e600; /* Yellow */
+        }
+        
+        .overlay-box h2.sky-title {
+            color: #b0e0e6; /* Powder Blue */
+        }
+        
+        .overlay-box h2.gauntlet-title {
+            color: #C070FF; /* Purple */
+        }
+        
+        .overlay-box h2.finish-title {
+            color: #4dff88; /* Bright Green */
+        }
+
+        .overlay-box p {
+            font-size: 1.1em;
+            margin: 0 0 30px 0;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+        
+        .overlay-box strong {
+            color: #87CEEB; /* Sky blue */
+            font-weight: 700;
+        }
+        
+        .overlay-box .final-time {
+            font-size: 2em;
+            font-weight: 700;
+            color: #4dff88;
+            margin-bottom: 10px;
+        }
+        
+        .overlay-box .reward-text {
+            font-size: 1.3em;
+            color: #ffc107; /* Gold */
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        
+        /* --- NEW Leaderboard --- */
+        .leaderboard {
+            margin-top: -15px;
+            margin-bottom: 25px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #ffc107;
+        }
+        .leaderboard span {
+            color: #4dff88;
+            font-weight: 700;
+        }
+        .new-best-text {
+            font-size: 1.5em;
+            color: #4dff88;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        /* --- NEW Difficulty --- */
+        .difficulty-select {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .button.difficulty {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            flex-grow: 1;
+        }
+        .button.difficulty.normal {
+             background: linear-gradient(145deg, #28a745, #218838); /* Green */
+             box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        .button.difficulty.normal:hover:not(:disabled) {
+             box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        .button.difficulty.hard {
+             background: linear-gradient(145deg, #dc3545, #c82333); /* Red */
+             box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+        .button.difficulty.hard:hover:not(:disabled) {
+             box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        }
+
+
+        .button {
+            padding: 15px 35px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(145deg, #0d6efd, #0a58ca);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            margin: 5px;
+        }
+        
+        .button.button-secondary {
+            background: linear-gradient(145deg, #6c757d, #5a6268);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+        
+        .button.button-job {
+            background: linear-gradient(145deg, #ffc107, #d39e00);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+            color: #212529;
+        }
+        .button.button-job:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        }
+
+        .button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+        
+        .button.button-secondary:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        }
+        
+        .button:disabled {
+            background: #555;
+            color: #aaa;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #restart-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 5;
+            padding: 10px 20px;
+            font-size: 1em;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* --- In-Game UI --- */
+        #ui-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 5;
+            display: flex; /* Use flexbox for horizontal layout */
+            gap: 25px; /* Space between items */
+        }
+        
+        /* --- Minigame UI --- */
+        #minigame-ui {
+             position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: 700;
+            z-index: 5;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        #minigame-ui #relic-counter {
+            color: #C070FF; /* Purple for relics */
+        }
+        
+        #minigame-ui #pig-counter {
+            color: #FFC0CB; /* Pink for pigs */
+        }
+        
+        #minigame-ui button {
+            font-size: 0.7em;
+            padding: 10px 20px;
+        }
+        
+        /* --- Job UI --- */
+        #job-ui {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #ffc107;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: 700;
+            z-index: 5;
+            text-align: right;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        #job-ui p {
+            margin: 0;
+        }
+        #job-ui #job-timer {
+            color: white;
+            font-size: 1.3em;
+            margin-top: 5px;
+        }
+        
+        #title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 2.5em;
+            font-weight: 700;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+            z-index: 5;
+        }
+
+        #message-box {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 22px;
+            background-color: rgba(255, 200, 0, 0.85);
+            color: #333;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            z-index: 11;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.5s ease;
+        }
+
+        #ui-container p {
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        #ui-container .currency-display {
+            color: #ffc107; /* Gold */
+            font-weight: 700;
+        }
+
+        #ui-container strong {
+            color: #87CEEB; /* Sky blue */
+            font-weight: 700;
+        }
+        
+        /* --- Shop UI --- */
+        #shop-container {
+            width: 100%;
+            max-width: 550px; /* Wider */
+            text-align: left;
+            display: flex;
+            gap: 20px;
+        }
+        .shop-column {
+            flex: 1;
+        }
+        
+        .shop-section {
+            margin-bottom: 25px;
+        }
+        
+        .shop-section h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #4da6ff;
+            border-bottom: 2px solid #4da6ff;
+            padding-bottom: 5px;
+            margin: 0 0 15px 0;
+        }
+
+        .shop-section h3.cosmetics {
+            color: #4dff88;
+            border-bottom: 2px solid #4dff88;
+        }
+        
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .shop-item button {
+            width: 100%;
+            font-size: 1em;
+            padding: 12px 10px;
+        }
+        
+        /* Cosmetic Colors */
+        .shop-item button.color-red { background: #d00; }
+        .shop-item button.color-blue { background: #007bff; }
+        .shop-item button.color-green { background: #0a0; }
+        .shop-item button.color-yellow { background: #dca000; }
+        
+        /* Cosmetic Trails */
+        .shop-item button.trail-none { background: #6c757d; }
+        .shop-item button.trail-smoke { background: #aaaaaa; }
+        .shop-item button.trail-sparkle { background: #ffc107; color: #333; }
+        
+        .shop-item button:disabled {
+            background: #555;
+            color: #aaa;
+        }
+        .shop-item button.equipped {
+            background: #333;
+            color: #888;
+            border: 2px solid #ffc107;
+            box-shadow: 0 0 10px #ffc107;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Title -->
+    <div id="title">Island Flight</div>
+
+    <!-- UI Container for Controls -->
+    <div id="ui-container" class="hidden">
+        <p>
+            <strong>Controls:</strong>&nbsp;
+            <strong>[W/S]</strong> Pitch
+            &nbsp;|&nbsp;
+            <strong>[A/D]</strong> Yaw (Turn)
+            &nbsp;|&nbsp;
+            <strong>[Q/E]</strong> Roll
+            &nbsp;|&nbsp;
+            <strong>[L-SHIFT]</strong> Brakes
+        </p>
+        <p>
+            <strong>Speed:</strong> <span id="speed-indicator">1.0x</span>
+        </p>
+        <p class="currency-display">
+            Currency: $<span id="currency-indicator">0</span>
+        </p>
+    </div>
+    
+    <!-- Minigame UI -->
+    <div id="minigame-ui" class="hidden">
+        <p>Time: <span id="minigame-timer">0.00s</span></p>
+        <p id="relic-counter" class="hidden">Relics: 0 / 5</p>
+        <p id="pig-counter" class="hidden">Pigs: 0 / 5</p>
+        <button id="quit-minigame-button" class="button button-secondary">Quit</button>
+    </div>
+
+    <!-- Job UI -->
+    <div id="job-ui" class="hidden">
+        <p id="job-objective">Objective:</p>
+        <p id="job-timer">0.00s</p>
+    </div>
+
+
+    <!-- Restart Button (In-Game) -->
+    <button id="restart-button" class="button hidden">Restart</button>
+
+    <!-- Message Box -->
+    <div id="message-box" class="hidden"></div>
+
+    <!-- Main Menu Overlay -->
+    <div id="menu-overlay" class="overlay">
+        <div class="overlay-box">
+            <h1>Island Flight</h1>
+            <p>
+                Take off from the airport and explore the islands. The world is yours!
+                <br>
+                Collect <strong>gold coins</strong>, fly through <strong>yellow rings</strong> for speed boosts, and find <strong>blue portals</strong> to start challenges.
+                <br><br>
+                <strong>[W/S]</strong> : Pitch (Inverted) | <strong>[A/D]</strong> : Yaw (Turn) | <strong>[Q/E]</strong> : Roll | <strong>[L-SHIFT]</strong> : Brakes
+            </p>
+            <button id="start-button" class="button">Start Flying</button>
+        </div>
+    </div>
+
+    <!-- Crash Overlay -->
+    <div id="crash-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2>You Crashed!</h2>
+            <p>
+                Try to keep the plane in the air.
+            </p>
+            <button id="restart-button-crashed" class="button">Restart</button>
+        </div>
+    </div>
+    
+    <!-- === Minigame Overlays === -->
+
+    <!-- Forest Intro -->
+    <div id="minigame-intro-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="minigame-title">Forest Time Trial</h2>
+            <p>
+                Fly through the checkpoints and reach the finish line as fast as you can.
+                Don't hit the trees!
+            </p>
+            <div class="leaderboard">Best Time: <span id="forest-best-time">--.--s</span></div>
+            <div class="difficulty-select">
+                <button id="start-forest-normal-button" class="button difficulty normal">Normal</button>
+                <button id="start-forest-hard-button" class="button difficulty hard">Hard (Locked)</button>
+            </div>
+            <button id="return-to-world-intro-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Forest Crash -->
+    <div id="minigame-crash-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2>Minigame Failed!</h2>
+            <p>You hit an obstacle.</p>
+            <button id="restart-minigame-button" class="button">Restart Trial</button>
+            <button id="return-to-world-crash-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Forest Finish -->
+    <div id="minigame-finish-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="finish-title">Trial Complete!</h2>
+            <div id="forest-new-best" class="new-best-text hidden">New Best Time!</div>
+            <p>Your final time:</p>
+            <div id="final-time-element" class="final-time">0.00s</div>
+            <p id="forest-reward-text" class="reward-text">You earned: $100</p>
+            <button id="restart-minigame-finish-button" class="button">Try Again</button>
+            <button id="return-to-world-finish-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    
+    <!-- Volcano Intro -->
+    <div id="volcano-intro-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="volcano-title">Volcano Dodge</h2>
+            <p>
+                The volcano is erupting! Fly along the lava river and reach the finish line.
+                Dodge the falling <strong>meteors</strong> and random <strong>lava geysers</strong>!
+            </p>
+            <div class="leaderboard">Best Time: <span id="volcano-best-time">--.--s</span></div>
+            <div class="difficulty-select">
+                <button id="start-volcano-normal-button" class="button difficulty normal">Normal</button>
+                <button id="start-volcano-hard-button" class="button difficulty hard">Hard (Locked)</button>
+            </div>
+            <button id="return-to-world-volcano-intro-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Volcano Crash -->
+    <div id="volcano-crash-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2>Minigame Failed!</h2>
+            <p>You were hit by a meteor or lava!</p>
+            <button id="restart-volcano-minigame-button" class="button">Restart Dodge</button>
+            <button id="return-to-world-volcano-crash-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Volcano Finish -->
+    <div id="volcano-finish-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="finish-title">Eruption Survived!</h2>
+            <div id="volcano-new-best" class="new-best-text hidden">New Best Time!</div>
+            <p>Your final time:</p>
+            <div id="volcano-final-time-element" class="final-time">0.00s</div>
+            <p id="volcano-reward-text" class="reward-text">You earned: $200</p>
+            <button id="restart-volcano-minigame-finish-button" class="button">Try Again</button>
+            <button id="return-to-world-volcano-finish-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    
+    <!-- Desert Intro -->
+    <div id="desert-intro-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="desert-title">Relic Hunt</h2>
+            <p>
+                An ancient tomb is opening! Find all <strong>5 hidden relics</strong> to seal it before time runs out!
+            </p>
+            <div class="leaderboard">Best Time: <span id="desert-best-time">--.--s</span></div>
+            <div class="difficulty-select">
+                <button id="start-desert-normal-button" class="button difficulty normal">Normal (90s)</button>
+                <button id="start-desert-hard-button" class="button difficulty hard">Hard (60s)</button>
+            </div>
+            <button id="return-to-world-desert-intro-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Desert Lose -->
+    <div id="desert-lose-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="desert-title">The Tomb Has Opened!</h2>
+            <p>You ran out of time! The mummy has been released.</p>
+            <button id="restart-desert-minigame-button" class="button">Try Again</button>
+            <button id="return-to-world-desert-lose-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Desert Finish -->
+    <div id="desert-finish-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="finish-title">Tomb Sealed!</h2>
+            <div id="desert-new-best" class="new-best-text hidden">New Best Time!</div>
+            <p>You collected all 5 relics with <span id="desert-final-time-element" class="final-time" style="display: inline-block; padding: 0 5px;">0.00s</span> left!</p>
+            <p id="desert-reward-text" class="reward-text">You earned: $150</p>
+            <button id="restart-desert-minigame-finish-button" class="button">Play Again</button>
+            <button id="return-to-world-desert-finish-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    
+    <!-- Lighthouse Intro -->
+    <div id="lighthouse-intro-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="lighthouse-title">Stormy Seas</h2>
+            <p>
+                A massive storm has hit! Fly to the emergency <strong>power station</strong> at the end of the channel. Avoid the <strong>tsunami waves</strong>!
+            </p>
+            <div class="leaderboard">Best Time: <span id="lighthouse-best-time">--.--s</span></div>
+            <div class="difficulty-select">
+                <button id="start-lighthouse-normal-button" class="button difficulty normal">Normal</button>
+                <button id="start-lighthouse-hard-button" class="button difficulty hard">Hard (Locked)</button>
+            </div>
+            <button id="return-to-world-lighthouse-intro-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Lighthouse Crash -->
+    <div id="lighthouse-crash-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2>Minigame Failed!</h2>
+            <p>You were hit by a wave!</p>
+            <button id="restart-lighthouse-minigame-button" class="button">Try Again</button>
+            <button id="return-to-world-lighthouse-crash-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Lighthouse Finish -->
+    <div id="lighthouse-finish-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="finish-title">Lighthouse On!</h2>
+            <div id="lighthouse-new-best" class="new-best-text hidden">New Best Time!</div>
+            <p>You reached the power station! Your time:</p>
+            <div id="lighthouse-final-time-element" class="final-time">0.00s</div>
+            <p id="lighthouse-reward-text" class="reward-text">You earned: $150</p>
+            <button id="restart-lighthouse-minigame-finish-button" class="button">Try Again</button>
+            <button id="return-to-world-lighthouse-finish-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    
+    <!-- Sky Intro -->
+    <div id="sky-intro-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="sky-title">Pig Roundup</h2>
+            <p>
+                The flying pigs have escaped! Wrangle all <strong>5 pigs</strong> by flying into them before time runs out!
+            </p>
+            <div class="leaderboard">Best Time: <span id="sky-best-time">--.--s</span></div>
+            <div class="difficulty-select">
+                <button id="start-sky-normal-button" class="button difficulty normal">Normal (60s)</button>
+                <button id="start-sky-hard-button" class="button difficulty hard">Hard (45s)</button>
+            </div>
+            <button id="return-to-world-sky-intro-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Sky Lose -->
+    <div id="sky-lose-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="sky-title">Time's Up!</h2>
+            <p>You ran out of time! The pigs got away.</p>
+            <button id="restart-sky-minigame-button" class="button">Try Again</button>
+            <button id="return-to-world-sky-lose-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <!-- Sky Finish -->
+    <div id="sky-finish-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="finish-title">Roundup Complete!</h2>
+            <div id="sky-new-best" class="new-best-text hidden">New Best Time!</div>
+            <p>You wrangled all 5 pigs with <span id="sky-final-time-element" class="final-time" style="display: inline-block; padding: 0 5px;">0.00s</span> left!</p>
+            <p id="sky-reward-text" class="reward-text">You earned: $150</p>
+            <button id="restart-sky-minigame-finish-button" class="button">Play Again</button>
+            <button id="return-to-world-sky-finish-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    
+    <!-- === Shop Overlay === -->
+    <div id="shop-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="minigame-title">City Shop</h2>
+            <p style="font-size: 1.5em; font-weight: 700; color: #ffc107; margin-bottom: 25px;">Your Currency: $<span id="shop-currency-indicator">0</span></p>
+            
+            <div id="shop-container">
+                <!-- Upgrades Column -->
+                <div class="shop-column">
+                    <div class="shop-section">
+                        <h3>Upgrades</h3>
+                        <div class="shop-items" style="grid-template-columns: 1fr;">
+                            <div class="shop-item"><button id="buy-speed-button">Speed Boost</button></div>
+                            <div class="shop-item"><button id="buy-handling-button">Handling</button></div>
+                            <div class="shop-item"><button id="buy-brakes-button">Brakes</button></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Cosmetics Column -->
+                <div class="shop-column">
+                    <div class="shop-section">
+                        <h3 class="cosmetics">Colors</h3>
+                        <div class="shop-items">
+                            <div class="shop-item"><button id="color-btn-red" class="color-red">Red</button></div>
+                            <div class="shop-item"><button id="color-btn-blue" class="color-blue">Blue</button></div>
+                            <div class="shop-item"><button id="color-btn-green" class="color-green">Green</button></div>
+                            <div class="shop-item"><button id="color-btn-yellow" class="color-yellow">Yellow</button></div>
+                        </div>
+                    </div>
+                    <div class="shop-section">
+                        <h3 class="cosmetics">Trails</h3>
+                        <div class="shop-items">
+                            <div class="shop-item"><button id="trail-btn-none" class="trail-none">None</button></div>
+                            <div class="shop-item"><button id="trail-btn-smoke" class="trail-smoke">Smoke</button></div>
+                            <div class="shop-item"><button id="trail-btn-sparkle" class="trail-sparkle">Sparkle</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <button id="return-to-world-shop-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+
+    <!-- === Gauntlet Overlays (NEW) === -->
+    <div id="gauntlet-intro-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="gauntlet-title">The Gauntlet</h2>
+            <p>
+                You have mastered all the islands. Only one challenge remains.
+                Fly through the ice cavern and reach the finish line. There is no turning back.
+            </p>
+            <div class="leaderboard">Best Time: <span id="gauntlet-best-time">--.--s</span></div>
+            <button id="start-gauntlet-button" class="button difficulty hard" style="background: linear-gradient(145deg, #C070FF, #9932CC);">Start The Gauntlet</button>
+            <br>
+            <button id="return-to-world-gauntlet-intro-button" class="button button-secondary" style="margin-top: 15px;">Return to World</button>
+        </div>
+    </div>
+    <div id="gauntlet-crash-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2>Minigame Failed!</h2>
+            <p>You were hit by an obstacle or the cavern wall!</p>
+            <button id="restart-gauntlet-minigame-button" class="button">Restart The Gauntlet</button>
+            <button id="return-to-world-gauntlet-crash-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+    <div id="gauntlet-finish-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="finish-title">Gauntlet Complete!</h2>
+            <div id="gauntlet-new-best" class="new-best-text hidden">New Best Time!</div>
+            <p>You have conquered the final challenge! Your time:</p>
+            <div id="gauntlet-final-time-element" class="final-time">0.00s</div>
+            <p id="gauntlet-reward-text" class="reward-text">You earned: $1000</p>
+            <button id="restart-gauntlet-minigame-finish-button" class="button">Try Again</button>
+            <button id="return-to-world-gauntlet-finish-button" class="button button-secondary">Return to World</button>
+        </div>
+    </div>
+
+    <!-- === Job Board Overlay === -->
+    <div id="job-board-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <h2 class="job-title">Airport Job Board</h2>
+            <p>Landed at the airport. Pick up a job?</p>
+            
+            <button id="start-delivery-job-button" class="button button-job">Delivery ($100+)</button>
+            <button id="start-dusting-job-button" class="button button-job">Crop Dusting ($200)</button>
+            
+            <br><br>
+            <button id="no-job-button" class="button button-secondary">Take Off</button>
+        </div>
+    </div>
+
+
+    <!-- Import three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"
+            }
+        }
+    </script>
+
+    <!-- Game Script -->
+    <script type="module">
+        import * as THREE from 'three';
+
+        let scene, camera, renderer, plane, ocean, ambientLight, directionalLight;
+        let gameState = 'menu'; // 'menu', 'playing', 'crashed', 'minigame_intro', ...
+        const keyStates = {};
+        const rings = []; // Speed rings
+        const coins = []; // Currency coins
+        const clock = new THREE.Clock(); // For delta time physics
+        let gameTime = 0; // For Day/Night Cycle
+
+        // --- World Objects ---
+        let volcanoLavaMaterial, lighthouseLight, waterfall, waterfallMist;
+        const townLights = [];
+        const npcPlanes = [];
+        const npcBoats = [];
+        const birdFlocks = [];
+        const nightColor = new THREE.Color(0x000011);
+        const dayColor = new THREE.Color(0x87CEEB);
+        const dayFogFar = 8000;
+        const nightFogFar = 4000;
+
+        // --- DOM Elements ---
+        let menuOverlay, crashOverlay, startButton, restartButton, restartButtonCrashed, uiContainer, titleElement, messageBox, speedIndicator, currencyIndicator;
+        
+        // --- Minigame DOM Elements ---
+        let minigameIntroOverlay, minigameUI, minigameTimerElement, quitMinigameButton, relicCounterElement, pigCounterElement;
+        let minigameCrashOverlay, restartMinigameButton, returnToWorldCrashButton;
+        let minigameFinishOverlay, finishTimeElement, restartMinigameFinishButton, returnToWorldFinishButton, returnToWorldIntroButton;
+        
+        let volcanoIntroOverlay, startVolcanoMinigameButton, returnToWorldVolcanoIntroButton;
+        let volcanoCrashOverlay, restartVolcanoMinigameButton, returnToWorldVolcanoCrashButton;
+        let volcanoFinishOverlay, volcanoFinishTimeElement, restartVolcanoMinigameFinishButton, returnToWorldVolcanoFinishButton;
+        let desertIntroOverlay, startDesertMinigameButton, returnToWorldDesertIntroButton;
+        let desertLoseOverlay, restartDesertMinigameButton, returnToWorldDesertLoseButton;
+        let desertFinishOverlay, desertFinishTimeElement, restartDesertMinigameFinishButton, returnToWorldDesertFinishButton;
+        let lighthouseIntroOverlay, startLighthouseMinigameButton, returnToWorldLighthouseIntroButton;
+        let lighthouseCrashOverlay, restartLighthouseMinigameButton, returnToWorldLighthouseCrashButton;
+        let lighthouseFinishOverlay, lighthouseFinishTimeElement, restartLighthouseMinigameFinishButton, returnToWorldLighthouseFinishButton;
+        let skyIntroOverlay, startSkyMinigameButton, returnToWorldSkyIntroButton;
+        let skyLoseOverlay, restartSkyMinigameButton, returnToWorldSkyLoseButton;
+        let skyFinishOverlay, skyFinishTimeElement, restartSkyMinigameFinishButton, returnToWorldSkyFinishButton;
+
+        // --- Gauntlet DOM Elements (NEW) ---
+        let gauntletIntroOverlay, startGauntletMinigameButton, returnToWorldGauntletIntroButton;
+        let gauntletCrashOverlay, restartGauntletMinigameButton, returnToWorldGauntletCrashButton;
+        let gauntletFinishOverlay, gauntletFinishTimeElement, restartGauntletMinigameFinishButton, returnToWorldGauntletFinishButton;
+
+        // --- NEW Leaderboard/Difficulty DOM Elements ---
+        let forestBestTime, volcanoBestTime, desertBestTime, lighthouseBestTime, skyBestTime, gauntletBestTime;
+        let forestNewBest, volcanoNewBest, desertNewBest, lighthouseNewBest, skyNewBest, gauntletNewBest;
+        let startForestNormal, startForestHard, startVolcanoNormal, startVolcanoHard, startDesertNormal, startDesertHard, startLighthouseNormal, startLighthouseHard, startSkyNormal, startSkyHard;
+        let forestRewardText, volcanoRewardText, desertRewardText, lighthouseRewardText, skyRewardText, gauntletRewardText;
+
+        // --- Shop DOM Elements ---
+        let shopOverlay, shopCurrencyIndicator, returnToWorldShopButton;
+        let buySpeedButton, buyHandlingButton, buyBrakesButton;
+        let colorButtons = {};
+        let trailButtons = {};
+
+        // --- Job System DOM Elements ---
+        let jobBoardOverlay, startDeliveryJobButton, startDustingJobButton, noJobButton;
+        let jobUi, jobObjectiveElement, jobTimerElement;
+
+        // --- Game Parameters ---
+        let basePlaneSpeed = 150; 
+        let pitchSpeed = 0.6;   
+        let yawSpeed = 0.9;     
+        let rollSpeed = 0.72;   
+        let brakingForce = 60; // NEW: Braking power
+        
+        const maxPlaneSpeed = 480;
+        const speedBoostAmount = 180;
+        const speedDecay = 36;
+        const ringCollisionRadius = 45;
+        let currentPlaneSpeed = 0;
+        const acceleration = 36; 
+        
+        // --- Currency & Shop System ---
+        let playerCurrency = 0;
+        const COIN_REWARD = 10;
+        const JOB_REWARDS = { delivery: 100, dusting: 200 };
+        const MINIGAME_REWARDS = {
+            forest: { normal: 100, hard: 250 },
+            volcano: { normal: 200, hard: 400 },
+            desert: { normal: 150, hard: 300 },
+            lighthouse: { normal: 150, hard: 300 },
+            sky: { normal: 150, hard: 300 },
+            gauntlet: { normal: 1000 } // NEW
+        };
+        const COIN_RADIUS = 15;
+        
+        // --- Shop Upgrades ---
+        let speedLevel = 1, handlingLevel = 1, brakesLevel = 1;
+        const maxUpgradeLevel = 5;
+        const upgradeCosts = [150, 250, 400, 650, 1000]; // Cost for levels 2, 3, 4, 5
+        const speedUpgradeAmount = 15; // Added to base speed per level
+        const handlingUpgradeAmount = 0.1; // Added to yaw/roll per level
+        const brakingUpgradeAmount = 20; // Added to braking force per level
+
+        // --- Shop Cosmetics ---
+        let planeColorHex = 0xdd2222;
+        let planeColorName = 'red';
+        const purchasedColors = ['red'];
+        const colorShopItems = [
+            { name: 'red', hex: 0xdd2222, cost: 0, btnId: 'color-btn-red' },
+            { name: 'blue', hex: 0x007bff, cost: 50, btnId: 'color-btn-blue' },
+            { name: 'green', hex: 0x00aa00, cost: 50, btnId: 'color-btn-green' },
+            { name: 'yellow', hex: 0xdca000, cost: 50, btnId: 'color-btn-yellow' }
+        ];
+
+        let currentTrail = 'none';
+        let planeTrail; // The particle system group
+        const purchasedTrails = ['none'];
+        const trailShopItems = [
+            { name: 'none', cost: 0, btnId: 'trail-btn-none' },
+            { name: 'smoke', cost: 200, btnId: 'trail-btn-smoke' },
+            { name: 'sparkle', cost: 350, btnId: 'trail-btn-sparkle' }
+        ];
+
+        // --- NEW Leaderboard / Difficulty Data ---
+        let leaderboards = {
+            forest: { normal: Infinity, hard: Infinity, completedNormal: false },
+            volcano: { normal: Infinity, hard: Infinity, completedNormal: false },
+            desert: { normal: Infinity, hard: Infinity, completedNormal: false },
+            lighthouse: { normal: Infinity, hard: Infinity, completedNormal: false },
+            sky: { normal: Infinity, hard: Infinity, completedNormal: false },
+            gauntlet: { normal: Infinity, completedNormal: false } // NEW
+        };
+        let currentMinigameDifficulty = 'normal';
+ 
+        // --- Constants ---
+        const ISLAND_HEIGHT_MAIN = 5; 
+        const START_POSITION = new THREE.Vector3(0, ISLAND_HEIGHT_MAIN + 2, 250);
+        const START_QUATERNION = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -Math.PI / 2, 0));
+        const MINIGAME_START_QUATERNION = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
+        const MAP_BOUNDARY = 10000;
+        const ISLAND_RADIUS_MAIN = 1000;
+        const OCEAN_HEIGHT = 0;
+        const CRASH_BUFFER = 4;
+        const LANDING_SPEED = 40; 
+        const LANDING_PITCH = 0.1; 
+
+        // --- Minigame Globals ---
+        let forestPortal, cityPortal, volcanoPortal, desertPortal, lighthousePortal, skyPortal;
+        let forestCourseGroup, volcanoCourseGroup, desertCourseGroup, lighthouseCourseGroup, skyCourseGroup;
+        const forestObstacles = [], forestCheckpoints = [];
+        let forestFinishLine;
+        const volcanoMeteors = [], volcanoGeysers = [];
+        let volcanoFinishLine;
+        const desertRelics = [];
+        let tombDoor;
+        let relicsCollected = 0;
+        const lighthouseWaves = [];
+        let lighthouseFinishLine;
+        const skyPigs = [];
+        let pigsCollected = 0;
+        
+        let minigameTimer = 0, minigameStartTime = 0;
+        let returnPosition = new THREE.Vector3(); 
+        const MINIGAME_COURSE_Y = 10000;
+        const MINIGAME_START_POS = new THREE.Vector3(0, MINIGAME_COURSE_Y, 0);
+        const PORTAL_RADIUS = 70;
+        const OBSTACLE_RADIUS = 20;
+        const CHECKPOINT_RADIUS = 45;
+        
+        const VOLCANO_COURSE_Y = 20000, VOLCANO_START_POS = new THREE.Vector3(0, VOLCANO_COURSE_Y, 0);
+        const METEOR_RADIUS = 15, GEYSER_RADIUS = 12, GEYSER_HEIGHT = 150, LAVA_RIVER_WIDTH = 200;
+        
+        const DESERT_COURSE_Y = 30000, DESERT_START_POS = new THREE.Vector3(0, DESERT_COURSE_Y + 100, 450);
+        const DESERT_START_QUATERNION = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
+        const DESERT_RELIC_RADIUS = 15, TOMB_DOOR_SPEED = 2.0;
+        const DESERT_TIME_LIMIT = { normal: 90.0, hard: 60.0 };
+
+        const LIGHTHOUSE_COURSE_Y = 40000, LIGHTHOUSE_START_POS = new THREE.Vector3(0, LIGHTHOUSE_COURSE_Y, 0);
+        const LIGHTHOUSE_START_QUATERNION = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
+        const WAVE_RADIUS = 20, WAVE_WIDTH = 400, WAVE_HEIGHT = 150;
+        
+        const SKY_COURSE_Y = 50000, SKY_START_POS = new THREE.Vector3(0, SKY_COURSE_Y + 100, 450);
+        const SKY_START_QUATERNION = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
+        const PIG_RADIUS = 10;
+        const SKY_TIME_LIMIT = { normal: 60.0, hard: 45.0 };
+        
+        const GAUNTLET_COURSE_Y = 60000, GAUNTLET_START_POS = new THREE.Vector3(0, GAUNTLET_COURSE_Y, 0); // NEW
+        const GAUNTLET_TUNNEL_RADIUS = 120; // NEW
+        const GAUNTLET_OBSTACLE_RADIUS = 15; // NEW
+
+        // --- Job System Globals ---
+        let currentJob = { type: 'none', startTime: 0, objective: '' };
+        const farmFields = [];
+        let farmFieldsDusted = [];
+        let deliveryPackage;
+        let deliveryTarget;
+        let dustParticles;
+        
+        // --- World Expansion Globals ---
+        const arcticIslandPos = new THREE.Vector3(0, -10, -4000);
+        const canyonCenter = new THREE.Vector3(0, 5, 4000);
+        const waterfallPos = new THREE.Vector3(-950, 100, 0);
+        const caveEntrancePos = new THREE.Vector3(-980, 100, 0);
+        const CAVE_RADIUS = 40;
+
+        // --- Gauntlet Globals (NEW) ---
+        let gauntletPortal;
+        let gauntletCourseGroup;
+        const gauntletObstacles = [];
+        let gauntletFinishLine;
+
+        // --- INITIALIZATION ---
+        function init() {
+            // Get All UI Elements
+            getDOMElements();
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 2000, dayFogFar); 
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 60000);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            directionalLight.position.set(200, 500, 300);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
+            scene.add(directionalLight);
+
+            // --- Create World ---
+            createOcean();
+            createIsland();
+            createAirport();
+            createVolcano();
+            createTown();
+            createLighthouse();
+            createForestZone(); 
+            createDesertIslandAndCanyons(); // Modified
+            createFloatingIslands();
+            createArcticIsland(); // NEW
+            createWaterfallCave(); // NEW
+            createFarm();
+            createRings();
+            createCoins();
+            createClouds();
+            createRoads();
+            createBoats();
+            createBirdFlocks();
+            createNPCPlanes();
+            
+            // --- Create Minigame Assets ---
+            createPortals();
+            createForestCourse();
+            createVolcanoCourse();
+            createDesertCourse();
+            createLighthouseCourse();
+            createSkyCourse();
+            createGauntletCourse(); // NEW
+
+            // --- Create Plane ---
+            plane = createPlane();
+            plane.position.copy(START_POSITION);
+            scene.add(plane);
+            
+            // --- Create Job Assets (NOW THAT PLANE EXISTS) ---
+            createJobAssets(); 
+            createTrailParticles(); // NEW: Create trail particle system
+
+            // Set initial camera position
+            updateCamera();
+            camera.position.add(new THREE.Vector3(0, 20, 50));
+            camera.lookAt(plane.position);
+
+            // --- Event Listeners ---
+            addEventListeners();
+            
+            // Start animation loop
+            animate();
+        }
+        
+        function getDOMElements() {
+            // Get all baseline UI
+            menuOverlay = document.getElementById('menu-overlay');
+            crashOverlay = document.getElementById('crash-overlay');
+            startButton = document.getElementById('start-button');
+            restartButton = document.getElementById('restart-button');
+            restartButtonCrashed = document.getElementById('restart-button-crashed');
+            uiContainer = document.getElementById('ui-container');
+            titleElement = document.getElementById('title');
+            messageBox = document.getElementById('message-box');
+            speedIndicator = document.getElementById('speed-indicator');
+            currencyIndicator = document.getElementById('currency-indicator');
+            
+            // Minigame General
+            minigameUI = document.getElementById('minigame-ui');
+            minigameTimerElement = document.getElementById('minigame-timer');
+            quitMinigameButton = document.getElementById('quit-minigame-button');
+            relicCounterElement = document.getElementById('relic-counter');
+            pigCounterElement = document.getElementById('pig-counter');
+            
+            // Forest
+            minigameIntroOverlay = document.getElementById('minigame-intro-overlay');
+            minigameCrashOverlay = document.getElementById('minigame-crash-overlay');
+            minigameFinishOverlay = document.getElementById('minigame-finish-overlay');
+            restartMinigameButton = document.getElementById('restart-minigame-button');
+            returnToWorldCrashButton = document.getElementById('return-to-world-crash-button');
+            finishTimeElement = document.getElementById('final-time-element');
+            restartMinigameFinishButton = document.getElementById('restart-minigame-finish-button');
+            returnToWorldFinishButton = document.getElementById('return-to-world-finish-button');
+            returnToWorldIntroButton = document.getElementById('return-to-world-intro-button');
+            forestBestTime = document.getElementById('forest-best-time');
+            forestNewBest = document.getElementById('forest-new-best');
+            startForestNormal = document.getElementById('start-forest-normal-button');
+            startForestHard = document.getElementById('start-forest-hard-button');
+            forestRewardText = document.getElementById('forest-reward-text');
+            
+            // Volcano
+            volcanoIntroOverlay = document.getElementById('volcano-intro-overlay');
+            volcanoCrashOverlay = document.getElementById('volcano-crash-overlay');
+            volcanoFinishOverlay = document.getElementById('volcano-finish-overlay');
+            startVolcanoMinigameButton = document.getElementById('start-volcano-normal-button'); // Renamed in HTML
+            returnToWorldVolcanoIntroButton = document.getElementById('return-to-world-volcano-intro-button');
+            restartVolcanoMinigameButton = document.getElementById('restart-volcano-minigame-button');
+            returnToWorldVolcanoCrashButton = document.getElementById('return-to-world-volcano-crash-button');
+            volcanoFinishTimeElement = document.getElementById('volcano-final-time-element');
+            restartVolcanoMinigameFinishButton = document.getElementById('restart-volcano-minigame-finish-button');
+            returnToWorldVolcanoFinishButton = document.getElementById('return-to-world-volcano-finish-button');
+            volcanoBestTime = document.getElementById('volcano-best-time');
+            volcanoNewBest = document.getElementById('volcano-new-best');
+            startVolcanoNormal = document.getElementById('start-volcano-normal-button');
+            startVolcanoHard = document.getElementById('start-volcano-hard-button');
+            volcanoRewardText = document.getElementById('volcano-reward-text');
+
+            // Desert
+            desertIntroOverlay = document.getElementById('desert-intro-overlay');
+            desertLoseOverlay = document.getElementById('desert-lose-overlay');
+            desertFinishOverlay = document.getElementById('desert-finish-overlay');
+            startDesertMinigameButton = document.getElementById('start-desert-normal-button'); // Renamed in HTML
+            returnToWorldDesertIntroButton = document.getElementById('return-to-world-desert-intro-button');
+            restartDesertMinigameButton = document.getElementById('restart-desert-minigame-button');
+            returnToWorldDesertLoseButton = document.getElementById('return-to-world-desert-lose-button');
+            desertFinishTimeElement = document.getElementById('desert-final-time-element');
+            restartDesertMinigameFinishButton = document.getElementById('restart-desert-minigame-finish-button');
+            returnToWorldDesertFinishButton = document.getElementById('return-to-world-desert-finish-button');
+            desertBestTime = document.getElementById('desert-best-time');
+            desertNewBest = document.getElementById('desert-new-best');
+            startDesertNormal = document.getElementById('start-desert-normal-button');
+            startDesertHard = document.getElementById('start-desert-hard-button');
+            desertRewardText = document.getElementById('desert-reward-text');
+
+            // Lighthouse
+            lighthouseIntroOverlay = document.getElementById('lighthouse-intro-overlay');
+            lighthouseCrashOverlay = document.getElementById('lighthouse-crash-overlay');
+            lighthouseFinishOverlay = document.getElementById('lighthouse-finish-overlay');
+            startLighthouseMinigameButton = document.getElementById('start-lighthouse-normal-button'); // Renamed
+            returnToWorldLighthouseIntroButton = document.getElementById('return-to-world-lighthouse-intro-button');
+            restartLighthouseMinigameButton = document.getElementById('restart-lighthouse-minigame-button');
+            returnToWorldLighthouseCrashButton = document.getElementById('return-to-world-lighthouse-crash-button');
+            lighthouseFinishTimeElement = document.getElementById('lighthouse-final-time-element');
+            restartLighthouseMinigameFinishButton = document.getElementById('restart-lighthouse-minigame-finish-button');
+            returnToWorldLighthouseFinishButton = document.getElementById('return-to-world-lighthouse-finish-button');
+            lighthouseBestTime = document.getElementById('lighthouse-best-time');
+            lighthouseNewBest = document.getElementById('lighthouse-new-best');
+            startLighthouseNormal = document.getElementById('start-lighthouse-normal-button');
+            startLighthouseHard = document.getElementById('start-lighthouse-hard-button');
+            lighthouseRewardText = document.getElementById('lighthouse-reward-text');
+            
+            // Sky
+            skyIntroOverlay = document.getElementById('sky-intro-overlay');
+            skyLoseOverlay = document.getElementById('sky-lose-overlay');
+            skyFinishOverlay = document.getElementById('sky-finish-overlay');
+            startSkyMinigameButton = document.getElementById('start-sky-normal-button'); // Renamed
+            returnToWorldSkyIntroButton = document.getElementById('return-to-world-sky-intro-button');
+            restartSkyMinigameButton = document.getElementById('restart-sky-minigame-button');
+            returnToWorldSkyLoseButton = document.getElementById('return-to-world-sky-lose-button');
+            skyFinishTimeElement = document.getElementById('sky-final-time-element');
+            restartSkyMinigameFinishButton = document.getElementById('restart-sky-minigame-finish-button');
+            returnToWorldSkyFinishButton = document.getElementById('return-to-world-sky-finish-button');
+            skyBestTime = document.getElementById('sky-best-time');
+            skyNewBest = document.getElementById('sky-new-best');
+            startSkyNormal = document.getElementById('start-sky-normal-button');
+            startSkyHard = document.getElementById('start-sky-hard-button');
+            skyRewardText = document.getElementById('sky-reward-text');
+
+            // Gauntlet (NEW)
+            gauntletIntroOverlay = document.getElementById('gauntlet-intro-overlay');
+            gauntletCrashOverlay = document.getElementById('gauntlet-crash-overlay');
+            gauntletFinishOverlay = document.getElementById('gauntlet-finish-overlay');
+            startGauntletMinigameButton = document.getElementById('start-gauntlet-button');
+            returnToWorldGauntletIntroButton = document.getElementById('return-to-world-gauntlet-intro-button');
+            restartGauntletMinigameButton = document.getElementById('restart-gauntlet-minigame-button');
+            returnToWorldGauntletCrashButton = document.getElementById('return-to-world-gauntlet-crash-button');
+            gauntletFinishTimeElement = document.getElementById('gauntlet-final-time-element');
+            restartGauntletMinigameFinishButton = document.getElementById('restart-gauntlet-minigame-finish-button');
+            returnToWorldGauntletFinishButton = document.getElementById('return-to-world-gauntlet-finish-button');
+            gauntletBestTime = document.getElementById('gauntlet-best-time');
+            gauntletNewBest = document.getElementById('gauntlet-new-best');
+            gauntletRewardText = document.getElementById('gauntlet-reward-text');
+
+            // Shop
+            shopOverlay = document.getElementById('shop-overlay');
+            shopCurrencyIndicator = document.getElementById('shop-currency-indicator');
+            returnToWorldShopButton = document.getElementById('return-to-world-shop-button');
+            buySpeedButton = document.getElementById('buy-speed-button');
+            buyHandlingButton = document.getElementById('buy-handling-button');
+            buyBrakesButton = document.getElementById('buy-brakes-button');
+            
+            colorShopItems.forEach(item => {
+                colorButtons[item.name] = document.getElementById(item.btnId);
+            });
+            trailShopItems.forEach(item => {
+                trailButtons[item.name] = document.getElementById(item.btnId);
+            });
+            
+            // Job
+            jobBoardOverlay = document.getElementById('job-board-overlay');
+            startDeliveryJobButton = document.getElementById('start-delivery-job-button');
+            startDustingJobButton = document.getElementById('start-dusting-job-button');
+            noJobButton = document.getElementById('no-job-button');
+            jobUi = document.getElementById('job-ui');
+            jobObjectiveElement = document.getElementById('job-objective');
+            jobTimerElement = document.getElementById('job-timer');
+        }
+
+        function addEventListeners() {
+            document.addEventListener('keydown', (e) => { keyStates[e.code] = true; });
+            document.addEventListener('keyup', (e) => { keyStates[e.code] = false; });
+            window.addEventListener('resize', onWindowResize);
+            
+            startButton.addEventListener('click', startGame);
+            restartButton.addEventListener('click', restartGame);
+            restartButtonCrashed.addEventListener('click', restartGame);
+            
+            // Minigame General
+            quitMinigameButton.addEventListener('click', returnToWorld);
+
+            // Forest Listeners
+            startForestNormal.addEventListener('click', () => startForestMinigame('normal'));
+            startForestHard.addEventListener('click', () => startForestMinigame('hard'));
+            returnToWorldIntroButton.addEventListener('click', returnToWorld);
+            restartMinigameButton.addEventListener('click', () => startForestMinigame(currentMinigameDifficulty));
+            returnToWorldCrashButton.addEventListener('click', returnToWorld);
+            restartMinigameFinishButton.addEventListener('click', () => startForestMinigame(currentMinigameDifficulty));
+            returnToWorldFinishButton.addEventListener('click', returnToWorld);
+            
+            // Volcano Listeners
+            startVolcanoNormal.addEventListener('click', () => startVolcanoMinigame('normal'));
+            startVolcanoHard.addEventListener('click', () => startVolcanoMinigame('hard'));
+            returnToWorldVolcanoIntroButton.addEventListener('click', returnToWorld);
+            restartVolcanoMinigameButton.addEventListener('click', () => startVolcanoMinigame(currentMinigameDifficulty));
+            returnToWorldVolcanoCrashButton.addEventListener('click', returnToWorld);
+            restartVolcanoMinigameFinishButton.addEventListener('click', () => startVolcanoMinigame(currentMinigameDifficulty));
+            returnToWorldVolcanoFinishButton.addEventListener('click', returnToWorld);
+            
+            // Desert Listeners
+            startDesertNormal.addEventListener('click', () => startDesertMinigame('normal'));
+            startDesertHard.addEventListener('click', () => startDesertMinigame('hard'));
+            returnToWorldDesertIntroButton.addEventListener('click', returnToWorld);
+            restartDesertMinigameButton.addEventListener('click', () => startDesertMinigame(currentMinigameDifficulty));
+            returnToWorldDesertLoseButton.addEventListener('click', returnToWorld);
+            restartDesertMinigameFinishButton.addEventListener('click', () => startDesertMinigame(currentMinigameDifficulty));
+            returnToWorldDesertFinishButton.addEventListener('click', returnToWorld);
+
+            // Lighthouse Listeners
+            startLighthouseNormal.addEventListener('click', () => startLighthouseMinigame('normal'));
+            startLighthouseHard.addEventListener('click', () => startLighthouseMinigame('hard'));
+            returnToWorldLighthouseIntroButton.addEventListener('click', returnToWorld);
+            restartLighthouseMinigameButton.addEventListener('click', () => startLighthouseMinigame(currentMinigameDifficulty));
+            returnToWorldLighthouseCrashButton.addEventListener('click', returnToWorld);
+            restartLighthouseMinigameFinishButton.addEventListener('click', () => startLighthouseMinigame(currentMinigameDifficulty));
+            returnToWorldLighthouseFinishButton.addEventListener('click', returnToWorld);
+            
+            // Sky Listeners
+            startSkyNormal.addEventListener('click', () => startSkyMinigame('normal'));
+            startSkyHard.addEventListener('click', () => startSkyMinigame('hard'));
+            returnToWorldSkyIntroButton.addEventListener('click', returnToWorld);
+            restartSkyMinigameButton.addEventListener('click', () => startSkyMinigame(currentMinigameDifficulty));
+            returnToWorldSkyLoseButton.addEventListener('click', returnToWorld);
+            restartSkyMinigameFinishButton.addEventListener('click', () => startSkyMinigame(currentMinigameDifficulty));
+            returnToWorldSkyFinishButton.addEventListener('click', returnToWorld);
+
+            // Gauntlet Listeners (NEW)
+            startGauntletMinigameButton.addEventListener('click', () => startGauntletMinigame('normal'));
+            returnToWorldGauntletIntroButton.addEventListener('click', returnToWorld);
+            restartGauntletMinigameButton.addEventListener('click', () => startGauntletMinigame('normal'));
+            returnToWorldGauntletCrashButton.addEventListener('click', returnToWorld);
+            restartGauntletMinigameFinishButton.addEventListener('click', () => startGauntletMinigame('normal'));
+            returnToWorldGauntletFinishButton.addEventListener('click', returnToWorld);
+
+            // Shop Listeners
+            returnToWorldShopButton.addEventListener('click', returnToWorld);
+            
+            // Job Listeners
+            startDeliveryJobButton.addEventListener('click', startDeliveryJob);
+            startDustingJobButton.addEventListener('click', startDustingJob);
+            noJobButton.addEventListener('click', () => {
+                jobBoardOverlay.classList.add('hidden');
+                gameState = 'playing';
+                uiContainer.classList.remove('hidden');
+                restartButton.classList.remove('hidden');
+                currentPlaneSpeed = LANDING_SPEED + 1;
+            });
+        }
+
+        // --- GAME STATE FUNCTIONS ---
+        function startGame() {
+            gameState = 'playing';
+            menuOverlay.classList.add('hidden');
+            titleElement.classList.add('hidden');
+            restartButton.classList.remove('hidden');
+            uiContainer.classList.remove('hidden');
+            
+            restartGame(); // Reset plane
+        }
+
+        function restartGame() {
+            gameState = 'playing';
+            plane.position.copy(START_POSITION);
+            plane.quaternion.copy(START_QUATERNION);
+            
+            playerCurrency = 0;
+            currentPlaneSpeed = 0; 
+            updateCurrencyUI();
+            
+            for (const ring of rings) {
+                ring.userData.used = false;
+                ring.material.color.set(0xffd700);
+            }
+            
+            for (const coin of coins) {
+                coin.visible = true;
+            }
+            
+            Object.keys(keyStates).forEach(key => { keyStates[key] = false; });
+
+            // Reset job
+            resetJob();
+            jobBoardOverlay.classList.add('hidden');
+            jobUi.classList.add('hidden');
+
+            crashOverlay.classList.add('hidden');
+            menuOverlay.classList.add('hidden');
+            titleElement.classList.add('hidden');
+            restartButton.classList.remove('hidden');
+            uiContainer.classList.remove('hidden');
+        }
+
+        function showCrashScreen() {
+            gameState = 'crashed';
+            crashOverlay.classList.remove('hidden');
+            restartButton.classList.add('hidden');
+            uiContainer.classList.add('hidden');
+            jobUi.classList.add('hidden'); // Hide job UI on crash
+        }
+        
+        function showMessage(text, duration = 2500) {
+            messageBox.textContent = text;
+            messageBox.classList.remove('hidden');
+            messageBox.style.opacity = 1;
+            
+            setTimeout(() => {
+                messageBox.style.opacity = 0;
+                messageBox.addEventListener('transitionend', () => {
+                    messageBox.classList.add('hidden');
+                }, { once: true });
+            }, duration); 
+        }
+        
+        function updateCurrencyUI() {
+            currencyIndicator.textContent = playerCurrency;
+            shopCurrencyIndicator.textContent = playerCurrency;
+        }
+        
+        // --- MINIGAME STATE FUNCTIONS ---
+        
+        function formatTime(time) {
+            return time === Infinity ? "--.--s" : time.toFixed(2) + 's';
+        }
+        
+        function enterForestMinigameIntro() {
+            gameState = 'minigame_intro';
+            returnPosition.copy(plane.position);
+            uiContainer.classList.add('hidden');
+            restartButton.classList.add('hidden');
+            
+            // Update leaderboard and difficulty
+            forestBestTime.textContent = formatTime(leaderboards.forest.normal);
+            startForestHard.disabled = !leaderboards.forest.completedNormal;
+            startForestHard.textContent = leaderboards.forest.completedNormal ? "Hard" : "Hard (Locked)";
+            
+            minigameIntroOverlay.classList.remove('hidden');
+            plane.position.copy(MINIGAME_START_POS);
+            plane.quaternion.copy(MINIGAME_START_QUATERNION);
+        }
+        
+        function startForestMinigame(difficulty) {
+            gameState = 'minigame_playing';
+            currentMinigameDifficulty = difficulty;
+
+            plane.position.copy(MINIGAME_START_POS);
+            plane.quaternion.copy(MINIGAME_START_QUATERNION);
+            
+            // Set speed based on difficulty
+            currentPlaneSpeed = (difficulty === 'hard') ? basePlaneSpeed * 1.8 : basePlaneSpeed * 1.5;
+            
+            forestCheckpoints.forEach(cp => {
+                cp.userData.used = false;
+                cp.material.color.set(0xffa500);
+            });
+            
+            // Show/hide obstacles based on difficulty
+            forestObstacles.forEach((obs, index) => {
+                // In hard mode, all obstacles are visible. In normal, every 2nd one is.
+                const isHardObstacle = (index % 2 !== 0);
+                obs.parent.visible = (difficulty === 'hard') || !isHardObstacle;
+            });
+            
+            minigameIntroOverlay.classList.add('hidden');
+            minigameCrashOverlay.classList.add('hidden');
+            minigameFinishOverlay.classList.add('hidden');
+            minigameUI.classList.remove('hidden');
+            
+            minigameStartTime = clock.getElapsedTime();
+            minigameTimer = 0;
+        }
+        
+        function crashForestMinigame() {
+            gameState = 'minigame_crashed';
+            minigameUI.classList.add('hidden');
+            minigameCrashOverlay.classList.remove('hidden');
+        }
+        
+        function finishForestMinigame() {
+            gameState = 'minigame_finished';
+            minigameUI.classList.add('hidden');
+            minigameFinishOverlay.classList.remove('hidden');
+            finishTimeElement.textContent = minigameTimer.toFixed(2) + 's';
+            
+            const difficulty = currentMinigameDifficulty;
+            const reward = MINIGAME_REWARDS.forest[difficulty];
+            playerCurrency += reward;
+            forestRewardText.textContent = `You earned: $${reward}`;
+            updateCurrencyUI();
+            
+            // Update leaderboard
+            if (minigameTimer < leaderboards.forest[difficulty]) {
+                leaderboards.forest[difficulty] = minigameTimer;
+                forestNewBest.classList.remove('hidden');
+            } else {
+                forestNewBest.classList.add('hidden');
+            }
+            
+            if (difficulty === 'normal') {
+                leaderboards.forest.completedNormal = true;
+            }
+        }
+        
+        function enterVolcanoMinigameIntro() {
+            gameState = 'minigame_volcano_intro';
+            returnPosition.copy(plane.position);
+            uiContainer.classList.add('hidden');
+            restartButton.classList.add('hidden');
+            
+            volcanoBestTime.textContent = formatTime(leaderboards.volcano.normal);
+            startVolcanoHard.disabled = !leaderboards.volcano.completedNormal;
+            startVolcanoHard.textContent = leaderboards.volcano.completedNormal ? "Hard" : "Hard (Locked)";
+            
+            volcanoIntroOverlay.classList.remove('hidden');
+            plane.position.copy(VOLCANO_START_POS);
+            plane.quaternion.copy(MINIGAME_START_QUATERNION);
+        }
+        
+        function startVolcanoMinigame(difficulty) {
+            gameState = 'minigame_volcano_playing';
+            currentMinigameDifficulty = difficulty;
+
+            plane.position.copy(VOLCANO_START_POS);
+            plane.quaternion.copy(MINIGAME_START_QUATERNION);
+            currentPlaneSpeed = basePlaneSpeed;
+            
+            volcanoMeteors.forEach(meteor => {
+                volcanoCourseGroup.remove(meteor);
+            });
+            volcanoMeteors.length = 0;
+            
+            volcanoGeysers.forEach(geyser => {
+                geyser.scale.y = 0.01;
+                geyser.visible = false;
+                geyser.userData.active = false;
+                geyser.userData.cooling = false;
+            });
+            
+            volcanoIntroOverlay.classList.add('hidden');
+            volcanoCrashOverlay.classList.add('hidden');
+            volcanoFinishOverlay.classList.add('hidden');
+            minigameUI.classList.remove('hidden');
+            
+            minigameStartTime = clock.getElapsedTime();
+            minigameTimer = 0;
+        }
+        
+        function crashVolcanoMinigame() {
+            gameState = 'minigame_volcano_crashed';
+            minigameUI.classList.add('hidden');
+            volcanoCrashOverlay.classList.remove('hidden');
+        }
+        
+        function finishVolcanoMinigame() {
+            gameState = 'minigame_volcano_finished';
+            minigameUI.classList.add('hidden');
+            volcanoFinishOverlay.classList.remove('hidden');
+            volcanoFinishTimeElement.textContent = minigameTimer.toFixed(2) + 's';
+            
+            const difficulty = currentMinigameDifficulty;
+            const reward = MINIGAME_REWARDS.volcano[difficulty];
+            playerCurrency += reward;
+            volcanoRewardText.textContent = `You earned: $${reward}`;
+            updateCurrencyUI();
+            
+            if (minigameTimer < leaderboards.volcano[difficulty]) {
+                leaderboards.volcano[difficulty] = minigameTimer;
+                volcanoNewBest.classList.remove('hidden');
+            } else {
+                volcanoNewBest.classList.add('hidden');
+            }
+            
+            if (difficulty === 'normal') {
+                leaderboards.volcano.completedNormal = true;
+            }
+        }
+
+        function enterShopMenu() {
+            gameState = 'shop_menu';
+            returnPosition.copy(plane.position);
+            uiContainer.classList.add('hidden');
+            restartButton.classList.add('hidden');
+            updateShopUI();
+            shopOverlay.classList.remove('hidden');
+        }
+        
+        function returnToWorld() {
+            gameState = 'playing';
+            plane.position.copy(returnPosition);
+            
+            const forward = new THREE.Vector3(1, 0, 0); 
+            forward.applyQuaternion(plane.quaternion);
+            forward.multiplyScalar(PORTAL_RADIUS * 1.5);
+            plane.position.add(forward);
+            
+            // Hide all overlays
+            minigameIntroOverlay.classList.add('hidden');
+            minigameCrashOverlay.classList.add('hidden');
+            minigameFinishOverlay.classList.add('hidden');
+            minigameUI.classList.add('hidden');
+            shopOverlay.classList.add('hidden');
+            volcanoIntroOverlay.classList.add('hidden');
+            volcanoCrashOverlay.classList.add('hidden');
+            volcanoFinishOverlay.classList.add('hidden');
+            desertIntroOverlay.classList.add('hidden');
+            desertLoseOverlay.classList.add('hidden');
+            desertFinishOverlay.classList.add('hidden');
+            lighthouseIntroOverlay.classList.add('hidden');
+            lighthouseCrashOverlay.classList.add('hidden');
+            lighthouseFinishOverlay.classList.add('hidden');
+            skyIntroOverlay.classList.add('hidden');
+            skyLoseOverlay.classList.add('hidden');
+            skyFinishOverlay.classList.add('hidden');
+            jobBoardOverlay.classList.add('hidden'); 
+            gauntletIntroOverlay.classList.add('hidden'); // NEW
+            gauntletCrashOverlay.classList.add('hidden'); // NEW
+            gauntletFinishOverlay.classList.add('hidden'); // NEW
+            
+            uiContainer.classList.remove('hidden');
+            restartButton.classList.remove('hidden');
+        }
+        
+        function enterDesertMinigameIntro() {
+            gameState = 'minigame_desert_intro';
+            returnPosition.copy(plane.position);
+            uiContainer.classList.add('hidden');
+            restartButton.classList.add('hidden');
+
+            desertBestTime.textContent = formatTime(leaderboards.desert.normal, true);
+            startDesertHard.disabled = !leaderboards.desert.completedNormal;
+            startDesertHard.textContent = leaderboards.desert.completedNormal ? "Hard (60s)" : "Hard (Locked)";
+            
+            desertIntroOverlay.classList.remove('hidden');
+            plane.position.copy(DESERT_START_POS);
+            plane.quaternion.copy(DESERT_START_QUATERNION);
+        }
+        
+        function startDesertMinigame(difficulty) {
+            gameState = 'minigame_desert_playing';
+            currentMinigameDifficulty = difficulty;
+
+            plane.position.copy(DESERT_START_POS);
+            plane.quaternion.copy(DESERT_START_QUATERNION);
+            currentPlaneSpeed = basePlaneSpeed;
+            
+            relicsCollected = 0;
+            desertRelics.forEach(relic => relic.visible = true);
+            minigameTimer = DESERT_TIME_LIMIT[difficulty];
+            tombDoor.position.y = 45;
+            
+            desertIntroOverlay.classList.add('hidden');
+            desertLoseOverlay.classList.add('hidden');
+            desertFinishOverlay.classList.add('hidden');
+            minigameUI.classList.remove('hidden');
+            relicCounterElement.classList.remove('hidden');
+            pigCounterElement.classList.add('hidden');
+            relicCounterElement.textContent = `Relics: 0 / 5`;
+            minigameTimerElement.textContent = minigameTimer.toFixed(2) + 's';
+        }
+        
+        function loseDesertMinigame() {
+            gameState = 'minigame_desert_lose';
+            minigameUI.classList.add('hidden');
+            relicCounterElement.classList.add('hidden');
+            desertLoseOverlay.classList.remove('hidden');
+        }
+        
+        function finishDesertMinigame() {
+            gameState = 'minigame_desert_finish';
+            minigameUI.classList.add('hidden');
+            relicCounterElement.classList.add('hidden');
+            desertFinishOverlay.classList.remove('hidden');
+            
+            const difficulty = currentMinigameDifficulty;
+            const reward = MINIGAME_REWARDS.desert[difficulty];
+            const timeRemaining = minigameTimer;
+            const timeTaken = DESERT_TIME_LIMIT[difficulty] - timeRemaining;
+            
+            desertFinishTimeElement.textContent = timeRemaining.toFixed(2) + 's';
+            playerCurrency += reward;
+            desertRewardText.textContent = `You earned: $${reward}`;
+            updateCurrencyUI();
+
+            if (timeTaken < leaderboards.desert[difficulty]) {
+                leaderboards.desert[difficulty] = timeTaken;
+                desertNewBest.classList.remove('hidden');
+            } else {
+                desertNewBest.classList.add('hidden');
+            }
+            if (difficulty === 'normal') {
+                leaderboards.desert.completedNormal = true;
+            }
+        }
+
+        function enterLighthouseMinigameIntro() {
+            gameState = 'minigame_lighthouse_intro';
+            returnPosition.copy(plane.position);
+            uiContainer.classList.add('hidden');
+            restartButton.classList.add('hidden');
+
+            lighthouseBestTime.textContent = formatTime(leaderboards.lighthouse.normal);
+            startLighthouseHard.disabled = !leaderboards.lighthouse.completedNormal;
+            startLighthouseHard.textContent = leaderboards.lighthouse.completedNormal ? "Hard" : "Hard (Locked)";
+            
+            lighthouseIntroOverlay.classList.remove('hidden');
+            plane.position.copy(LIGHTHOUSE_START_POS);
+            plane.quaternion.copy(LIGHTHOUSE_START_QUATERNION);
+        }
+        
+        function startLighthouseMinigame(difficulty) {
+            gameState = 'minigame_lighthouse_playing';
+            currentMinigameDifficulty = difficulty;
+            
+            plane.position.copy(LIGHTHOUSE_START_POS);
+            plane.quaternion.copy(LIGHTHOUSE_START_QUATERNION);
+            currentPlaneSpeed = basePlaneSpeed;
+            
+            lighthouseWaves.forEach(wave => {
+                wave.visible = false;
+                wave.userData.active = false;
+            });
+            
+            lighthouseIntroOverlay.classList.add('hidden');
+            lighthouseCrashOverlay.classList.add('hidden');
+            lighthouseFinishOverlay.classList.add('hidden');
+            minigameUI.classList.remove('hidden');
+            relicCounterElement.classList.add('hidden');
+            pigCounterElement.classList.add('hidden');
+            
+            minigameStartTime = clock.getElapsedTime();
+            minigameTimer = 0;
+        }
+        
+        function crashLighthouseMinigame() {
+            gameState = 'minigame_lighthouse_crashed';
+            minigameUI.classList.add('hidden');
+            lighthouseCrashOverlay.classList.remove('hidden');
+        }
+        
+        function finishLighthouseMinigame() {
+            gameState = 'minigame_lighthouse_finished';
+            minigameUI.classList.add('hidden');
+            lighthouseFinishOverlay.classList.remove('hidden');
+            lighthouseFinishTimeElement.textContent = minigameTimer.toFixed(2) + 's';
+            
+            const difficulty = currentMinigameDifficulty;
+            const reward = MINIGAME_REWARDS.lighthouse[difficulty];
+            playerCurrency += reward;
+            lighthouseRewardText.textContent = `You earned: $${reward}`;
+            updateCurrencyUI();
+            
+            if (minigameTimer < leaderboards.lighthouse[difficulty]) {
+                leaderboards.lighthouse[difficulty] = minigameTimer;
+                lighthouseNewBest.classList.remove('hidden');
+            } else {
+                lighthouseNewBest.classList.add('hidden');
+            }
+            if (difficulty === 'normal') {
+                leaderboards.lighthouse.completedNormal = true;
+            }
+        }
+        
+        function enterSkyMinigameIntro() {
+            gameState = 'minigame_sky_intro';
+            returnPosition.copy(plane.position);
+            uiContainer.classList.add('hidden');
+            restartButton.classList.add('hidden');
+
+            skyBestTime.textContent = formatTime(leaderboards.sky.normal, true);
+            startSkyHard.disabled = !leaderboards.sky.completedNormal;
+            startSkyHard.textContent = leaderboards.sky.completedNormal ? "Hard (45s)" : "Hard (Locked)";
+            
+            skyIntroOverlay.classList.remove('hidden');
+            plane.position.copy(SKY_START_POS);
+            plane.quaternion.copy(SKY_START_QUATERNION);
+        }
+        
+        function startSkyMinigame(difficulty) {
+            gameState = 'minigame_sky_playing';
+            currentMinigameDifficulty = difficulty;
+
+            plane.position.copy(SKY_START_POS);
+            plane.quaternion.copy(SKY_START_QUATERNION);
+            currentPlaneSpeed = basePlaneSpeed * 1.2;
+            
+            pigsCollected = 0;
+            skyPigs.forEach(pig => {
+                pig.visible = true;
+                const x = (Math.random() - 0.5) * 800;
+                const y = (Math.random() - 0.5) * 400;
+                const z = (Math.random() - 0.5) * 800;
+                pig.position.set(x, y, z);
+                pig.userData.velocity.set(
+                    (Math.random() - 0.5) * 50,
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 50
+                );
+            });
+            
+            minigameTimer = SKY_TIME_LIMIT[difficulty];
+            
+            skyIntroOverlay.classList.add('hidden');
+            skyLoseOverlay.classList.add('hidden');
+            skyFinishOverlay.classList.add('hidden');
+            minigameUI.classList.remove('hidden');
+            relicCounterElement.classList.add('hidden');
+            pigCounterElement.classList.remove('hidden');
+            pigCounterElement.textContent = `Pigs: 0 / 5`;
+            minigameTimerElement.textContent = minigameTimer.toFixed(2) + 's';
+        }
+        
+        function loseSkyMinigame() {
+            gameState = 'minigame_sky_lose';
+            minigameUI.classList.add('hidden');
+            pigCounterElement.classList.add('hidden');
+            skyLoseOverlay.classList.remove('hidden');
+        }
+        
+        function finishSkyMinigame() {
+            gameState = 'minigame_sky_finish';
+            minigameUI.classList.add('hidden');
+            pigCounterElement.classList.add('hidden');
+            skyFinishOverlay.classList.remove('hidden');
+            
+            const difficulty = currentMinigameDifficulty;
+            const reward = MINIGAME_REWARDS.sky[difficulty];
+            const timeRemaining = minigameTimer;
+            const timeTaken = SKY_TIME_LIMIT[difficulty] - timeRemaining;
+            
+            skyFinishTimeElement.textContent = timeRemaining.toFixed(2) + 's';
+            playerCurrency += reward;
+            skyRewardText.textContent = `You earned: $${reward}`;
+            updateCurrencyUI();
+
+            if (timeTaken < leaderboards.sky[difficulty]) {
+                leaderboards.sky[difficulty] = timeTaken;
+                skyNewBest.classList.remove('hidden');
+            } else {
+                skyNewBest.classList.add('hidden');
+            }
+            if (difficulty === 'normal') {
+                leaderboards.sky.completedNormal = true;
+            }
+        }
+        
+        // --- GAUNTLET (NEW) ---
+        function enterGauntletMinigameIntro() {
+            // Check if all other minigames are complete on normal
+            const allComplete = leaderboards.forest.completedNormal &&
+                                leaderboards.volcano.completedNormal &&
+                                leaderboards.desert.completedNormal &&
+                                leaderboards.lighthouse.completedNormal &&
+                                leaderboards.sky.completedNormal;
+
+            if (!allComplete) {
+                showMessage("You must complete all other challenges on Normal to attempt The Gauntlet!", 4000);
+                return;
+            }
+
+            gameState = 'minigame_gauntlet_intro';
+            returnPosition.copy(plane.position);
+            uiContainer.classList.add('hidden');
+            restartButton.classList.add('hidden');
+            
+            gauntletBestTime.textContent = formatTime(leaderboards.gauntlet.normal);
+            gauntletIntroOverlay.classList.remove('hidden');
+            
+            plane.position.copy(GAUNTLET_START_POS);
+            plane.quaternion.copy(MINIGAME_START_QUATERNION);
+        }
+        
+        function startGauntletMinigame(difficulty) {
+            gameState = 'minigame_gauntlet_playing';
+            currentMinigameDifficulty = difficulty; // 'normal'
+            
+            plane.position.copy(GAUNTLET_START_POS);
+            plane.quaternion.copy(MINIGAME_START_QUATERNION);
+            currentPlaneSpeed = basePlaneSpeed * 1.5; // Gauntlet is fast
+            
+            // Reset obstacles
+            gauntletObstacles.forEach(obs => {
+                obs.position.copy(obs.userData.startPos);
+                obs.rotation.set(0,0,0);
+            });
+            
+            gauntletIntroOverlay.classList.add('hidden');
+            gauntletCrashOverlay.classList.add('hidden');
+            gauntletFinishOverlay.classList.add('hidden');
+            minigameUI.classList.remove('hidden');
+            relicCounterElement.classList.add('hidden');
+            pigCounterElement.classList.add('hidden');
+            
+            minigameStartTime = clock.getElapsedTime();
+            minigameTimer = 0;
+        }
+        
+        function crashGauntletMinigame() {
+            gameState = 'minigame_gauntlet_crashed';
+            minigameUI.classList.add('hidden');
+            gauntletCrashOverlay.classList.remove('hidden');
+        }
+        
+        function finishGauntletMinigame() {
+            gameState = 'minigame_gauntlet_finished';
+            minigameUI.classList.add('hidden');
+            gauntletFinishOverlay.classList.remove('hidden');
+            gauntletFinishTimeElement.textContent = minigameTimer.toFixed(2) + 's';
+            
+            const difficulty = currentMinigameDifficulty;
+            const reward = MINIGAME_REWARDS.gauntlet[difficulty];
+            playerCurrency += reward;
+            gauntletRewardText.textContent = `You earned: $${reward}`;
+            updateCurrencyUI();
+            
+            if (minigameTimer < leaderboards.gauntlet[difficulty]) {
+                leaderboards.gauntlet[difficulty] = minigameTimer;
+                gauntletNewBest.classList.remove('hidden');
+            } else {
+                gauntletNewBest.classList.add('hidden');
+            }
+            
+            if (difficulty === 'normal') {
+                leaderboards.gauntlet.completedNormal = true;
+            }
+        }
+
+
+        // --- SHOP LOGIC ---
+        function updateShopUI() {
+            updateCurrencyUI();
+            
+            // --- Update Upgrade Buttons ---
+            const upgrades = [
+                { btn: buySpeedButton, level: speedLevel, name: "Speed" },
+                { btn: buyHandlingButton, level: handlingLevel, name: "Handling" },
+                { btn: buyBrakesButton, level: brakesLevel, name: "Brakes" }
+            ];
+
+            upgrades.forEach(upg => {
+                if (upg.level >= maxUpgradeLevel) {
+                    upg.btn.textContent = `${upg.name} Maxed Out`;
+                    upg.btn.disabled = true;
+                } else {
+                    const cost = upgradeCosts[upg.level - 1]; // Level 1 costs [0], Level 2 costs [1]...
+                    upg.btn.textContent = `${upg.name} Lvl ${upg.level + 1} ($${cost})`;
+                    upg.btn.disabled = playerCurrency < cost;
+                    
+                    const newBtn = upg.btn.cloneNode(true);
+                    upg.btn.parentNode.replaceChild(newBtn, upg.btn);
+                    
+                    if (upg.name === "Speed") {
+                        buySpeedButton = newBtn;
+                        buySpeedButton.addEventListener('click', buySpeedUpgrade);
+                    } else if (upg.name === "Handling") {
+                        buyHandlingButton = newBtn;
+                        buyHandlingButton.addEventListener('click', buyHandlingUpgrade);
+                    } else if (upg.name === "Brakes") {
+                        buyBrakesButton = newBtn;
+                        buyBrakesButton.addEventListener('click', buyBrakesUpgrade);
+                    }
+                }
+            });
+            
+            // --- Update Color Buttons ---
+            colorShopItems.forEach(item => {
+                const btn = colorButtons[item.name];
+                
+                if (purchasedColors.includes(item.name)) {
+                    if (planeColorName === item.name) {
+                        btn.textContent = "Equipped";
+                        btn.disabled = true;
+                        btn.classList.add('equipped');
+                    } else {
+                        btn.textContent = "Equip";
+                        btn.disabled = false;
+                        btn.classList.remove('equipped');
+                        const newBtn = btn.cloneNode(true);
+                        btn.parentNode.replaceChild(newBtn, btn);
+                        colorButtons[item.name] = newBtn;
+                        newBtn.addEventListener('click', () => setPlaneColor(item.name, item.hex));
+                    }
+                } else {
+                    btn.textContent = `Buy ($${item.cost})`;
+                    btn.disabled = playerCurrency < item.cost;
+                    btn.classList.remove('equipped');
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    colorButtons[item.name] = newBtn;
+                    newBtn.addEventListener('click', () => buyColor(item.name, item.hex, item.cost));
+                }
+            });
+
+            // --- Update Trail Buttons ---
+            trailShopItems.forEach(item => {
+                const btn = trailButtons[item.name];
+                
+                if (purchasedTrails.includes(item.name)) {
+                    if (currentTrail === item.name) {
+                        btn.textContent = "Equipped";
+                        btn.disabled = true;
+                        btn.classList.add('equipped');
+                    } else {
+                        btn.textContent = "Equip";
+                        btn.disabled = false;
+                        btn.classList.remove('equipped');
+                        const newBtn = btn.cloneNode(true);
+                        btn.parentNode.replaceChild(newBtn, btn);
+                        trailButtons[item.name] = newBtn;
+                        newBtn.addEventListener('click', () => setPlaneTrail(item.name));
+                    }
+                } else {
+                    btn.textContent = `Buy ($${item.cost})`;
+                    btn.disabled = playerCurrency < item.cost;
+                    btn.classList.remove('equipped');
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    trailButtons[item.name] = newBtn;
+                    newBtn.addEventListener('click', () => buyTrail(item.name, item.cost));
+                }
+            });
+        }
+        
+        function buySpeedUpgrade() {
+            const cost = upgradeCosts[speedLevel - 1];
+            if (playerCurrency >= cost && speedLevel < maxUpgradeLevel) {
+                playerCurrency -= cost;
+                speedLevel++;
+                basePlaneSpeed += speedUpgradeAmount;
+                currentPlaneSpeed = basePlaneSpeed;
+                showMessage(`Speed Boost Lvl ${speedLevel} purchased!`);
+                updateShopUI();
+            }
+        }
+        
+        function buyHandlingUpgrade() {
+            const cost = upgradeCosts[handlingLevel - 1];
+            if (playerCurrency >= cost && handlingLevel < maxUpgradeLevel) {
+                playerCurrency -= cost;
+                handlingLevel++;
+                yawSpeed += handlingUpgradeAmount;
+                rollSpeed += handlingUpgradeAmount;
+                showMessage(`Handling Lvl ${handlingLevel} purchased!`);
+                updateShopUI();
+            }
+        }
+        
+        function buyBrakesUpgrade() {
+            const cost = upgradeCosts[brakesLevel - 1];
+            if (playerCurrency >= cost && brakesLevel < maxUpgradeLevel) {
+                playerCurrency -= cost;
+                brakesLevel++;
+                brakingForce += brakingUpgradeAmount;
+                showMessage(`Brakes Lvl ${brakesLevel} purchased!`);
+                updateShopUI();
+            }
+        }
+        
+        function buyColor(name, hex, cost) {
+            if (playerCurrency >= cost && !purchasedColors.includes(name)) {
+                playerCurrency -= cost;
+                purchasedColors.push(name);
+                showMessage(`${name.charAt(0).toUpperCase() + name.slice(1)} paint purchased!`);
+                setPlaneColor(name, hex);
+            }
+        }
+        
+        function setPlaneColor(name, hex) {
+            planeColorName = name;
+            planeColorHex = hex;
+            
+            const body = plane.getObjectByName("body");
+            if (body) {
+                body.material.color.set(hex);
+            }
+            
+            updateShopUI();
+        }
+
+        function buyTrail(name, cost) {
+            if (playerCurrency >= cost && !purchasedTrails.includes(name)) {
+                playerCurrency -= cost;
+                purchasedTrails.push(name);
+                showMessage(`${name.charAt(0).toUpperCase() + name.slice(1)} trail purchased!`);
+                setPlaneTrail(name);
+            }
+        }
+
+        function setPlaneTrail(name) {
+            currentTrail = name;
+            updateShopUI();
+        }
+        
+        // --- JOB LOGIC ---
+        function enterJobBoard() {
+            if (gameState !== 'playing') return;
+            
+            gameState = 'job_board';
+            currentPlaneSpeed = 0; 
+            jobBoardOverlay.classList.remove('hidden');
+            uiContainer.classList.add('hidden');
+            restartButton.classList.add('hidden');
+
+            startDeliveryJobButton.disabled = (currentJob.type === 'delivery');
+            startDustingJobButton.disabled = (currentJob.type === 'crop_dusting');
+        }
+
+        function resetJob() {
+            currentJob = { type: 'none', startTime: 0, objective: '' };
+            
+            if (deliveryPackage) deliveryPackage.visible = false;
+            if (deliveryTarget) deliveryTarget.visible = false;
+            if (dustParticles) dustParticles.visible = false;
+            
+            farmFields.forEach(field => {
+                field.material.color.set(0x99cc66);
+            });
+            farmFieldsDusted = [];
+        }
+
+        function startDeliveryJob() {
+            resetJob(); 
+            currentJob = {
+                type: 'delivery',
+                startTime: clock.getElapsedTime(),
+                objective: 'Deliver to Desert Island'
+            };
+            
+            deliveryPackage.visible = true;
+            deliveryTarget.visible = true;
+            
+            jobBoardOverlay.classList.add('hidden');
+            jobUi.classList.remove('hidden');
+            gameState = 'playing';
+            
+            showMessage('Delivery Job Started! Fly to the Desert Island.');
+        }
+
+        function startDustingJob() {
+            resetJob();
+            farmFieldsDusted = [false, false, false, false];
+            currentJob = {
+                type: 'crop_dusting',
+                startTime: clock.getElapsedTime(),
+                objective: `Dust Fields: 0 / ${farmFields.length}`
+            };
+
+            jobBoardOverlay.classList.add('hidden');
+            jobUi.classList.remove('hidden');
+            jobObjectiveElement.textContent = currentJob.objective;
+            gameState = 'playing';
+
+            showMessage('Crop Dusting Job Started! Fly low over the farm fields.');
+        }
+
+        function updateJob(delta) {
+            if (currentJob.type === 'none') {
+                jobUi.classList.add('hidden');
+                return;
+            }
+
+            const jobTime = clock.getElapsedTime() - currentJob.startTime;
+            jobTimerElement.textContent = jobTime.toFixed(2) + 's';
+            
+            // --- Delivery Job Logic ---
+            if (currentJob.type === 'delivery') {
+                jobObjectiveElement.textContent = currentJob.objective;
+                if (deliveryTarget && deliveryTarget.visible) {
+                    deliveryTarget.rotation.y += 1.0 * delta;
+                    
+                    if (plane.position.distanceTo(deliveryTarget.position) < 50 &&
+                        plane.position.y < (canyonCenter.y + CRASH_BUFFER + 30)) { // Use canyonCenter.y
+                        
+                        const baseReward = JOB_REWARDS.delivery;
+                        const timeBonus = Math.max(0, 100 - (jobTime - 60));
+                        const totalReward = baseReward + Math.floor(timeBonus);
+                        
+                        playerCurrency += totalReward;
+                        updateCurrencyUI();
+                        showMessage(`Delivery Complete! +$${totalReward} ($${Math.floor(timeBonus)} bonus)`, 4000);
+                        
+                        resetJob();
+                    }
+                }
+            }
+            
+            // --- Crop Dusting Logic ---
+            if (currentJob.type === 'crop_dusting') {
+                let dusting = false;
+                const DUSTING_HEIGHT = 30; 
+
+                for (let i = 0; i < farmFields.length; i++) {
+                    if (farmFieldsDusted[i]) continue;
+
+                    const field = farmFields[i];
+                    const fieldBox = new THREE.Box3().setFromObject(field);
+                    
+                    if (plane.position.y < (field.position.y + DUSTING_HEIGHT) &&
+                        plane.position.x > fieldBox.min.x && plane.position.x < fieldBox.max.x &&
+                        plane.position.z > fieldBox.min.z && plane.position.z < fieldBox.max.z) {
+                        
+                        dusting = true;
+                        farmFieldsDusted[i] = true;
+                        field.material.color.set(0x668833);
+                        
+                        const numDusted = farmFieldsDusted.filter(Boolean).length;
+                        currentJob.objective = `Dust Fields: ${numDusted} / ${farmFields.length}`;
+                        jobObjectiveElement.textContent = currentJob.objective;
+                        
+                        if (numDusted === farmFields.length) {
+                            const baseReward = JOB_REWARDS.dusting;
+                            playerCurrency += baseReward;
+                            updateCurrencyUI();
+                            showMessage(`Crop Dusting Complete! +$${baseReward}`, 4000);
+                            resetJob();
+                            return; 
+                        }
+                    }
+                }
+                
+                // Update particle effect
+                if (dusting) {
+                    dustParticles.visible = true;
+                    // Simple particle animation
+                    dustParticles.children.forEach(p => {
+                        p.position.y -= 20 * delta;
+                        p.position.x += (Math.random() - 0.5) * 10 * delta;
+                        if (p.position.y < -10) {
+                            p.position.y = 0;
+                            p.position.x = (Math.random() - 0.5) * 5;
+                        }
+                    });
+                } else {
+                    dustParticles.visible = false;
+                }
+            }
+        }
+
+
+        // --- OBJECT CREATION ---
+        function createPlane(color = planeColorHex) {
+            const planeGroup = new THREE.Group();
+
+            const bodyMaterial = new THREE.MeshPhongMaterial({ color: color });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(10, 2, 2.5), bodyMaterial);
+            body.castShadow = true;
+            body.name = "body";
+            planeGroup.add(body);
+
+            const wingMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+            const wing = new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 16), wingMaterial);
+            wing.castShadow = true;
+            planeGroup.add(wing);
+            
+            const tail = new THREE.Mesh(new THREE.BoxGeometry(1, 2.5, 0.5), wingMaterial);
+            tail.position.set(-5, 1.5, 0);
+            tail.castShadow = true;
+            planeGroup.add(tail);
+            
+            const hStab = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.2, 4), wingMaterial);
+            hStab.position.set(-5, 1.5, 0);
+            hStab.castShadow = true;
+            planeGroup.add(hStab);
+
+            const cockpitMaterial = new THREE.MeshPhongMaterial({ color: 0x5599ff, transparent: true, opacity: 0.5 });
+            const cockpit = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1.5), cockpitMaterial);
+            cockpit.position.set(2.5, 1, 0);
+            planeGroup.add(cockpit);
+
+            const propeller = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2, 3, 0.2),
+                new THREE.MeshBasicMaterial({ color: 0x333333 })
+            );
+            propeller.position.set(5.1, 0, 0);
+            propeller.name = "propeller";
+            planeGroup.add(propeller);
+
+            return planeGroup;
+        }
+        
+        function createAirport() {
+            const airportGroup = new THREE.Group();
+            
+            const runwayGeo = new THREE.BoxGeometry(80, 0.2, 600);
+            const runwayMat = new THREE.MeshPhongMaterial({ color: 0x555555 });
+            const runway = new THREE.Mesh(runwayGeo, runwayMat);
+            runway.position.set(0, ISLAND_HEIGHT_MAIN + 0.1, 100);
+            runway.receiveShadow = true;
+            airportGroup.add(runway);
+            
+            const hangarGeo = new THREE.BoxGeometry(60, 40, 50);
+            const hangarMat = new THREE.MeshPhongMaterial({ color: 0xbbbbdd });
+            const hangar = new THREE.Mesh(hangarGeo, hangarMat);
+            hangar.position.set(-70, ISLAND_HEIGHT_MAIN + 20, 250);
+            hangar.castShadow = true;
+            hangar.receiveShadow = true;
+            airportGroup.add(hangar);
+            
+            scene.add(airportGroup);
+        }
+
+        function createOcean() {
+            const oceanGeometry = new THREE.PlaneGeometry(20000, 20000);
+            const oceanMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x3377aa, 
+                shininess: 50
+            });
+            ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+            ocean.rotation.x = -Math.PI / 2;
+            ocean.position.y = 0;
+            ocean.receiveShadow = true;
+            scene.add(ocean);
+        }
+
+        function createIsland() {
+            const islandGeometry = new THREE.CylinderGeometry(1000, 1200, 50, 32);
+            const islandMaterial = new THREE.MeshPhongMaterial({ color: 0x66bb66 });
+            const island = new THREE.Mesh(islandGeometry, islandMaterial);
+            island.position.y = -20;
+            island.receiveShadow = true;
+            scene.add(island);
+
+            const beachGeometry = new THREE.CylinderGeometry(1200, 1250, 20, 32);
+            const beachMaterial = new THREE.MeshPhongMaterial({ color: 0xf0e68c });
+            const beach = new THREE.Mesh(beachGeometry, beachMaterial);
+            beach.position.y = -40;
+            beach.receiveShadow = true;
+            scene.add(beach);
+        }
+
+        function createVolcano() {
+            const volcanoGeometry = new THREE.ConeGeometry(400, 500, 32);
+            const volcanoMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+            const volcano = new THREE.Mesh(volcanoGeometry, volcanoMaterial);
+            volcano.position.set(-300, 250, -400);
+            volcano.receiveShadow = true;
+            scene.add(volcano);
+
+            volcanoLavaMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xff4500,
+                emissive: 0x000000 // Start with no emissive glow
+            });
+            const lavaGeometry = new THREE.CircleGeometry(80, 32);
+            const lava = new THREE.Mesh(lavaGeometry, volcanoLavaMaterial);
+            lava.position.copy(volcano.position);
+            lava.position.y = 480;
+            lava.rotation.x = -Math.PI / 2;
+            scene.add(lava);
+        }
+
+        function createTown() {
+            const townGroup = new THREE.Group();
+            const buildingMaterial1 = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+            const buildingMaterial2 = new THREE.MeshPhongMaterial({ color: 0xbb9977 });
+            const roofMaterial = new THREE.MeshPhongMaterial({ color: 0xaa5533 });
+
+            for (let i = 0; i < 30; i++) {
+                const w = 20 + Math.random() * 20;
+                const h = 30 + Math.random() * 70;
+                const d = 20 + Math.random() * 20;
+                const x = 500 + (Math.random() - 0.5) * 300;
+                const z = 300 + (Math.random() - 0.5) * 300;
+                
+                const mat = Math.random() > 0.5 ? buildingMaterial1 : buildingMaterial2;
+                const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+                building.position.set(x, h / 2 + 5, z);
+                building.castShadow = true;
+                building.receiveShadow = true;
+                townGroup.add(building);
+
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.7, 15, 4), roofMaterial);
+                roof.position.set(x, h + 7.5, z);
+                roof.rotation.y = Math.PI / 4;
+                roof.castShadow = true;
+                townGroup.add(roof);
+            }
+            scene.add(townGroup);
+
+            const townLight = new THREE.PointLight(0xffffaa, 1, 500);
+            townLight.position.set(500, 50, 300);
+            townLight.visible = false;
+            townLights.push(townLight);
+            scene.add(townLight);
+        }
+
+        function createLighthouse() {
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(20, 25, 30, 16), new THREE.MeshPhongMaterial({ color: 0xeeeeee }));
+            base.position.set(800, 15 + 5, -100);
+            base.castShadow = true;
+            base.receiveShadow = true;
+            scene.add(base);
+
+            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(15, 18, 120, 16), new THREE.MeshPhongMaterial({ color: 0xdd2222 }));
+            shaft.position.set(800, 75 + 5, -100);
+            shaft.castShadow = true;
+            shaft.receiveShadow = true;
+            scene.add(shaft);
+            
+            const top = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 20, 16), new THREE.MeshPhongMaterial({ color: 0x333333 }));
+            top.position.set(800, 145 + 5, -100);
+            top.castShadow = true;
+            top.receiveShadow = true;
+            scene.add(top);
+
+            const light = new THREE.Mesh(new THREE.SphereGeometry(10), new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+            light.position.set(800, 150 + 5, -100);
+            scene.add(light);
+            
+            lighthouseLight = new THREE.PointLight(0xffff00, 2, 300);
+            lighthouseLight.position.copy(light.position);
+            lighthouseLight.visible = false;
+            scene.add(lighthouseLight);
+        }
+
+        function createForestZone() {
+            const forestGroup = new THREE.Group();
+            const treeMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22 });
+            const trunkMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            
+            for(let i = 0; i < 50; i++) {
+                const height = 40 + Math.random() * 60;
+                const radius = 10 + Math.random() * 10;
+                const x = -700 + (Math.random() - 0.5) * 400;
+                const z = 200 + (Math.random() - 0.5) * 400;
+                
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.2, radius * 0.2, height * 0.3, 8), trunkMaterial);
+                trunk.position.set(x, (height * 0.3) / 2 + 5, z);
+                trunk.castShadow = true;
+                forestGroup.add(trunk);
+                
+                const leaves = new THREE.Mesh(new THREE.ConeGeometry(radius, height * 0.7, 8), treeMaterial);
+                leaves.position.set(x, (height * 0.7) / 2 + (height * 0.3) + 5, z);
+                leaves.castShadow = true;
+                forestGroup.add(leaves);
+            }
+            scene.add(forestGroup);
+        }
+        
+        function createDesertIslandAndCanyons() {
+            const desertGroup = new THREE.Group();
+            const islandMaterial = new THREE.MeshPhongMaterial({ color: 0xFADDAA });
+            
+            // Island Base
+            const islandGeometry = new THREE.BoxGeometry(1200, 30, 1200);
+            const island = new THREE.Mesh(islandGeometry, islandMaterial);
+            island.position.copy(canyonCenter);
+            island.position.y -= 15; // Center is at 5, so base is at -10
+            island.receiveShadow = true;
+            desertGroup.add(island);
+            
+            // Pyramids
+            const pyramidMaterial = new THREE.MeshPhongMaterial({ color: 0xFFE4B5 });
+            const pyramid1 = new THREE.Mesh(new THREE.ConeGeometry(100, 150, 4), pyramidMaterial);
+            pyramid1.position.set(canyonCenter.x - 150, 75 + 5, canyonCenter.z);
+            pyramid1.rotation.y = Math.PI / 4;
+            pyramid1.castShadow = true;
+            desertGroup.add(pyramid1);
+            
+            const pyramid2 = new THREE.Mesh(new THREE.ConeGeometry(80, 120, 4), pyramidMaterial);
+            pyramid2.position.set(canyonCenter.x + 50, 60 + 5, canyonCenter.z + 100);
+            pyramid2.rotation.y = Math.PI / 4;
+            pyramid2.castShadow = true;
+            desertGroup.add(pyramid2);
+            
+            // Canyon Walls
+            const wallMat = new THREE.MeshPhongMaterial({ color: 0xD2B48C }); // Tan
+            const createWall = (w, h, d, x, y, z) => {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+                wall.position.set(canyonCenter.x + x, y + canyonCenter.y, canyonCenter.z + z);
+                wall.castShadow = true;
+                wall.receiveShadow = true;
+                desertGroup.add(wall);
+            };
+
+            // Outer walls
+            createWall(1200, 200, 50, 0, 100, -575);
+            createWall(1200, 200, 50, 0, 100, 575);
+            createWall(50, 200, 1200, -575, 100, 0);
+            createWall(50, 200, 1200, 575, 100, 0);
+            // Inner maze
+            createWall(50, 150, 600, -300, 75, 0);
+            createWall(50, 150, 600, 300, 75, 0);
+            createWall(400, 150, 50, 0, 75, -300);
+            createWall(400, 150, 50, 100, 75, 300);
+
+            scene.add(desertGroup);
+        }
+        
+        function createArcticIsland() {
+            const arcticGroup = new THREE.Group();
+            const iceMat = new THREE.MeshPhongMaterial({ color: 0xccffff, shininess: 100, transparent: true, opacity: 0.9 });
+            const snowMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            
+            // Island Base
+            const islandGeo = new THREE.CylinderGeometry(700, 700, 30, 32);
+            const island = new THREE.Mesh(islandGeo, snowMat);
+            island.position.copy(arcticIslandPos);
+            island.receiveShadow = true;
+            arcticGroup.add(island);
+            
+            // Icebergs
+            for(let i = 0; i < 10; i++) {
+                const size = 50 + Math.random() * 100;
+                const iceberg = new THREE.Mesh(new THREE.ConeGeometry(size, size * 1.5, 5), iceMat);
+                iceberg.position.set(
+                    arcticIslandPos.x + (Math.random() - 0.5) * 1600,
+                    size * 0.75,
+                    arcticIslandPos.z + (Math.random() - 0.5) * 1600
+                );
+                iceberg.castShadow = true;
+                arcticGroup.add(iceberg);
+            }
+            
+            // The "Bottomless" Pit
+            const pitGeo = new THREE.CylinderGeometry(80, 100, 800, 32, 1, true); // Open-ended
+            const pitMat = new THREE.MeshPhongMaterial({ color: 0x333344, side: THREE.DoubleSide });
+            const pit = new THREE.Mesh(pitGeo, pitMat);
+            pit.position.set(arcticIslandPos.x + 200, arcticIslandPos.y - 400 + 15, arcticIslandPos.z);
+            arcticGroup.add(pit);
+            
+            // Crystals in pit
+            const crystalMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, emissive: 0x00ffff });
+            for(let i = 0; i < 30; i++) {
+                const crystal = new THREE.Mesh(new THREE.BoxGeometry(5, 20, 5), crystalMat);
+                crystal.position.set(
+                    pit.position.x + (Math.random() - 0.5) * 150,
+                    pit.position.y - 300 + Math.random() * 100,
+                    pit.position.z + (Math.random() - 0.5) * 150
+                );
+                crystal.rotation.set(Math.random(), Math.random(), Math.random());
+                arcticGroup.add(crystal);
+                coins.push(crystal); // Add as a "coin"
+            }
+            
+            scene.add(arcticGroup);
+        }
+        
+        function createWaterfallCave() {
+            // Waterfall
+            const fallMat = new THREE.MeshBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.6 });
+            const fallGeo = new THREE.PlaneGeometry(100, 200);
+            waterfall = new THREE.Mesh(fallGeo, fallMat);
+            waterfall.position.copy(waterfallPos);
+            scene.add(waterfall);
+            
+            // Mist
+            const mistMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+            const mistGeo = new THREE.SphereGeometry(30, 16, 16);
+            waterfallMist = new THREE.Group();
+            for(let i = 0; i < 20; i++) {
+                const mistPart = new THREE.Mesh(mistGeo, mistMat);
+                mistPart.position.set(
+                    (Math.random() - 0.5) * 100,
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 30
+                );
+                mistPart.scale.setScalar(Math.random() * 0.5 + 0.5);
+                waterfallMist.add(mistPart);
+            }
+            waterfallMist.position.set(waterfallPos.x, waterfallPos.y - 100, waterfallPos.z);
+            scene.add(waterfallMist);
+
+            // Cave (just a dark hole)
+            const caveGeo = new THREE.SphereGeometry(50, 16, 16, 0, Math.PI);
+            const caveMat = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.DoubleSide });
+            const cave = new THREE.Mesh(caveGeo, caveMat);
+            cave.rotation.y = -Math.PI / 2;
+            cave.position.set(waterfallPos.x - 20, waterfallPos.y, waterfallPos.z);
+            scene.add(cave);
+            
+            // Coins in cave
+            const coinGeo = new THREE.CylinderGeometry(5, 5, 1, 16);
+            const coinMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
+            for(let i = 0; i < 5; i++) {
+                const coin = new THREE.Mesh(coinGeo, coinMat);
+                coin.position.set(
+                    cave.position.x - 20 - (i * 10),
+                    cave.position.y - 10 + (Math.random() * 20),
+                    cave.position.z + (Math.random() - 0.5) * 30
+                );
+                coin.rotation.x = Math.PI / 2;
+                scene.add(coin);
+                coins.push(coin);
+            }
+        }
+        
+        function createFloatingIslands() {
+            const floatingGroup = new THREE.Group();
+            const islandMaterial = new THREE.MeshPhongMaterial({ color: 0xB8860B });
+            
+            for(let i = 0; i < 15; i++) {
+                const w = 50 + Math.random() * 100;
+                const h = 30 + Math.random() * 50;
+                const d = 50 + Math.random() * 100;
+                const islandBlock = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), islandMaterial);
+                const x = -3000 + (Math.random() - 0.5) * 1000;
+                const y = 800 + (Math.random() - 0.5) * 300;
+                const z = -3000 + (Math.random() - 0.5) * 1000;
+                islandBlock.position.set(x, y, z);
+                islandBlock.castShadow = true;
+                floatingGroup.add(islandBlock);
+            }
+            scene.add(floatingGroup);
+            createClouds(10, new THREE.Vector3(-3000, 800, -3000), 600);
+        }
+        
+        function createFarm() {
+            const farmGroup = new THREE.Group();
+            const fieldMat = new THREE.MeshPhongMaterial({ color: 0x99cc66 }); // Light green
+            const barnMat = new THREE.MeshPhongMaterial({ color: 0xcc4444 }); // Red
+            
+            // Barn
+            const barn = new THREE.Mesh(new THREE.BoxGeometry(40, 30, 60), barnMat);
+            barn.position.set(700, ISLAND_HEIGHT_MAIN + 15, 600);
+            barn.castShadow = true;
+            farmGroup.add(barn);
+            
+            // Fields
+            const fieldPositions = [
+                [700, 500], [820, 500],
+                [700, 650], [820, 650]
+            ];
+            const fieldGeo = new THREE.BoxGeometry(100, 0.2, 100);
+            
+            for (const pos of fieldPositions) {
+                const field = new THREE.Mesh(fieldGeo, fieldMat.clone());
+                field.position.set(pos[0], ISLAND_HEIGHT_MAIN + 0.2, pos[1]);
+                field.receiveShadow = true;
+                farmFields.push(field);
+                farmGroup.add(field);
+            }
+            
+            scene.add(farmGroup);
+        }
+
+        function createRings() {
+            const ringGeometry = new THREE.TorusGeometry(40, 6, 16, 100);
+            const ringMaterial = new THREE.MeshPhongMaterial({ color: 0xffd700, shininess: 100 });
+            rings.length = 0; 
+            const ringPositions = [
+                [0, 200, -500], [300, 300, -700], [800, 150, 400], [-250, 600, -400],
+                [0, 200, 3800], [150, 300, 4100], // Desert/Canyon
+                [-2800, 900, -3100], [-3200, 750, -2900], // Floating
+                [0, 100, -3800], [200, 200, -4200], // Arctic
+                [-850, 100, 0] // Near waterfall
+            ];
+            ringPositions.forEach(pos => {
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial.clone()); 
+                ring.position.set(pos[0], pos[1], pos[2]);
+                if (Math.random() > 0.5) ring.rotation.y = Math.PI / 2;
+                ring.castShadow = true;
+                ring.userData = { used: false };
+                scene.add(ring);
+                rings.push(ring);
+            });
+        }
+        
+        function createCoins() {
+            const coinGeometry = new THREE.CylinderGeometry(5, 5, 1, 16);
+            const coinMaterial = new THREE.MeshBasicMaterial({ color: 0xffd700 });
+            const coinPositions = [
+                [100, 100, 100], [150, 120, 100], [200, 100, 100],
+                [-300, 520, -400], [-310, 530, -410], [-290, 520, -390],
+                [500, 100, 300], [520, 110, 310], [480, 100, 290],
+                [800, 170, -100], [800, 180, -110],
+                [0, 50, 4000], [50, 60, 4050], [-150, 160, 4000], // Desert/Canyon
+                [-2900, 800, -2900], [-3100, 850, -3100], [-3000, 900, -3050], // Floating
+                [200, arcticIslandPos.y - 100, arcticIslandPos.z], // Pit coins added elsewhere
+                [210, arcticIslandPos.y - 200, arcticIslandPos.z + 10],
+                [0, 700, 0], [200, 800, -200]
+            ];
+            for (const pos of coinPositions) {
+                const coin = new THREE.Mesh(coinGeometry, coinMaterial);
+                coin.position.set(pos[0], pos[1], pos[2]);
+                coin.rotation.x = Math.PI / 2;
+                scene.add(coin);
+                coins.push(coin);
+            }
+        }
+
+        function createClouds(count = 20, center = new THREE.Vector3(0, 0, 0), spread = 8000) {
+            const cloudGeometry = new THREE.SphereGeometry(50, 16, 16);
+            const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+            for (let i = 0; i < count; i++) {
+                const cloudGroup = new THREE.Group();
+                for (let j = 0; j < 5; j++) {
+                    const cloudSphere = new THREE.Mesh(cloudGeometry, cloudMaterial);
+                    cloudSphere.position.set((Math.random() - 0.5) * 100, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 100);
+                    cloudSphere.scale.set(0.8 + Math.random() * 0.4, 0.8 + Math.random() * 0.4, 0.8 + Math.random() * 0.4);
+                    cloudGroup.add(cloudSphere);
+                }
+                cloudGroup.position.set(center.x + (Math.random() - 0.5) * spread, (center.y || 800) + Math.random() * 400, center.z + (Math.random() - 0.5) * spread);
+                scene.add(cloudGroup);
+            }
+        }
+        
+        function createRoads() {
+            const roadMat = new THREE.MeshPhongMaterial({ color: 0x444444 });
+            const roadGeo1 = new THREE.BoxGeometry(40, 0.2, 500);
+            const road1 = new THREE.Mesh(roadGeo1, roadMat);
+            road1.position.set(80, ISLAND_HEIGHT_MAIN + 0.2, 50);
+            road1.receiveShadow = true;
+            scene.add(road1);
+            const roadGeo2 = new THREE.BoxGeometry(400, 0.2, 40);
+            const road2 = new THREE.Mesh(roadGeo2, roadMat);
+            road2.position.set(300, ISLAND_HEIGHT_MAIN + 0.2, 300);
+            road2.receiveShadow = true;
+            scene.add(road2);
+        }
+
+        function createBoats() {
+            const boatMat = new THREE.MeshPhongMaterial({ color: 0x964B00 });
+            const cabinMat = new THREE.MeshPhongMaterial({ color: 0xeeeeee });
+            for (let i = 0; i < 2; i++) {
+                const boat = new THREE.Group();
+                const hull = new THREE.Mesh(new THREE.BoxGeometry(10, 4, 30), boatMat);
+                boat.add(hull);
+                const cabin = new THREE.Mesh(new THREE.BoxGeometry(8, 6, 10), cabinMat);
+                cabin.position.y = 5; cabin.position.z = -2;
+                boat.add(cabin);
+                boat.position.set((Math.random() - 0.5) * 2000, OCEAN_HEIGHT + 2, (Math.random() - 0.5) * 2000);
+                boat.rotation.y = Math.random() * Math.PI * 2;
+                boat.userData.speed = 10 + Math.random() * 10;
+                npcBoats.push(boat);
+                scene.add(boat);
+            }
+        }
+
+        function createBirdFlocks() {
+            const birdMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+            const birdGeo = new THREE.ConeGeometry(0.5, 2, 3);
+            birdGeo.rotateX(Math.PI / 2);
+            for (let i = 0; i < 3; i++) {
+                const flock = new THREE.Group();
+                for (let j = 0; j < 10; j++) {
+                    const bird = new THREE.Mesh(birdGeo, birdMat);
+                    bird.position.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 20);
+                    flock.add(bird);
+                }
+                flock.position.set((Math.random() - 0.5) * 1000, 600 + Math.random() * 200, (Math.random() - 0.5) * 1000);
+                flock.userData.speed = new THREE.Vector3((Math.random() - 0.5) * 10, 0, (Math.random() - 0.5) * 10);
+                birdFlocks.push(flock);
+                scene.add(flock);
+            }
+        }
+        
+        function createNPCPlanes() {
+            const plane1 = createPlane(0xffffff);
+            plane1.position.set(1500, 300, 0);
+            npcPlanes.push(plane1);
+            scene.add(plane1);
+            const plane2 = createPlane(0xaaaaaa);
+            plane2.position.set(0, 500, -1200);
+            npcPlanes.push(plane2);
+            scene.add(plane2);
+        }
+
+        // --- MINIGAME/JOB ASSET CREATION ---
+        function createPortals() {
+            const portalGeometry = new THREE.TorusGeometry(60, 8, 16, 100);
+            const portalMaterial = new THREE.MeshPhongMaterial({ color: 0x0077ff, shininess: 100, emissive: 0x0055cc, transparent: true, opacity: 0.7 });
+            forestPortal = new THREE.Mesh(portalGeometry, portalMaterial.clone());
+            forestPortal.position.set(-700, 200, 200);
+            scene.add(forestPortal);
+            cityPortal = new THREE.Mesh(portalGeometry, portalMaterial.clone());
+            cityPortal.position.set(500, 200, 300);
+            scene.add(cityPortal);
+            volcanoPortal = new THREE.Mesh(portalGeometry, portalMaterial.clone());
+            volcanoPortal.position.set(-300, 550, -400);
+            scene.add(volcanoPortal);
+            desertPortal = new THREE.Mesh(portalGeometry, portalMaterial.clone());
+            desertPortal.position.set(canyonCenter.x - 150, 250, canyonCenter.z); // Over pyramid
+            scene.add(desertPortal);
+            lighthousePortal = new THREE.Mesh(portalGeometry, portalMaterial.clone());
+            lighthousePortal.position.set(800, 200, -100);
+            scene.add(lighthousePortal);
+            skyPortal = new THREE.Mesh(portalGeometry, portalMaterial.clone());
+            skyPortal.position.set(-3000, 800, -3000);
+            scene.add(skyPortal);
+
+            // Gauntlet Portal (NEW)
+            const gauntletPortalMaterial = new THREE.MeshPhongMaterial({ color: 0xC070FF, shininess: 100, emissive: 0x9932CC, transparent: true, opacity: 0.8 });
+            gauntletPortal = new THREE.Mesh(portalGeometry, gauntletPortalMaterial.clone());
+            gauntletPortal.position.set(arcticIslandPos.x + 200, arcticIslandPos.y - 300, arcticIslandPos.z);
+            gauntletPortal.rotation.x = Math.PI / 2;
+            scene.add(gauntletPortal);
+        }
+        
+        function createForestCourse() {
+            forestCourseGroup = new THREE.Group();
+            forestCourseGroup.position.set(MINIGAME_START_POS.x, MINIGAME_START_POS.y, MINIGAME_START_POS.z);
+            const treeMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22 });
+            const trunkMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            const checkpointMaterial = new THREE.MeshPhongMaterial({ color: 0xffa500, shininess: 100 });
+            const finishMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000, shininess: 100 });
+            const createTree = (x, y, z) => {
+                const height = 80, radius = 20;
+                const treeGroup = new THREE.Group();
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.2, radius * 0.2, height * 0.3, 8), trunkMaterial);
+                trunk.position.set(0, (height * 0.3) / 2, 0);
+                const leaves = new THREE.Mesh(new THREE.ConeGeometry(radius, height * 0.7, 8), treeMaterial);
+                leaves.position.set(0, (height * 0.7) / 2 + (height * 0.3), 0);
+                treeGroup.add(trunk); treeGroup.add(leaves);
+                treeGroup.position.set(x, y - height/2, z);
+                forestCourseGroup.add(treeGroup);
+                forestObstacles.push(leaves);
+            };
+            const createCheckpoint = (x, y, z) => {
+                const ringGeometry = new THREE.TorusGeometry(40, 6, 16, 100);
+                const ring = new THREE.Mesh(ringGeometry, checkpointMaterial.clone());
+                ring.position.set(x, y, z);
+                ring.userData = { used: false };
+                forestCheckpoints.push(ring);
+                forestCourseGroup.add(ring);
+            };
+            let courseZ = -200;
+            // Checkpoint 1
+            createCheckpoint(0, 0, courseZ); 
+            createTree(-150, 0, courseZ - 100); // Normal
+            createTree(0, 0, courseZ - 150); // Hard
+            createTree(150, 0, courseZ - 200); // Normal
+            courseZ -= 400;
+
+            // Checkpoint 2
+            createCheckpoint(50, 50, courseZ); 
+            createTree(-100, 30, courseZ - 150); // Normal
+            createTree(100, 50, courseZ - 200); // Hard
+            createTree(200, 70, courseZ - 250); // Normal
+            courseZ -= 400;
+
+            // Checkpoint 3
+            createCheckpoint(-50, -20, courseZ); 
+            createTree(100, -40, courseZ - 100); // Normal
+            createTree(0, 50, courseZ - 200); // Hard
+            createTree(-150, -50, courseZ - 300); // Normal
+            courseZ -= 400;
+            
+            // Checkpoint 4
+            createCheckpoint(0, 0, courseZ); 
+            createTree(-150, 0, courseZ - 150); // Normal
+            createTree(150, 0, courseZ - 150); // Normal
+            createTree(0, 80, courseZ - 150); // Hard
+            createTree(0, -80, courseZ - 150); // Hard
+            courseZ -= 400;
+
+            const finishGeometry = new THREE.TorusGeometry(60, 10, 16, 100);
+            forestFinishLine = new THREE.Mesh(finishGeometry, finishMaterial);
+            forestFinishLine.position.set(0, 0, courseZ);
+            forestCourseGroup.add(forestFinishLine);
+            scene.add(forestCourseGroup);
+        }
+
+        function createVolcanoCourse() {
+            volcanoCourseGroup = new THREE.Group();
+            volcanoCourseGroup.position.set(VOLCANO_START_POS.x, VOLCANO_START_POS.y, VOLCANO_START_POS.z);
+            const bgGeometry = new THREE.SphereGeometry(4000, 32, 32);
+            const bgMaterial = new THREE.MeshBasicMaterial({ color: 0x221111, side: THREE.BackSide });
+            volcanoCourseGroup.add(new THREE.Mesh(bgGeometry, bgMaterial));
+            const riverLength = 6000;
+            const lavaRiverGeo = new THREE.PlaneGeometry(LAVA_RIVER_WIDTH, riverLength, 1, 50);
+            const lavaRiverMat = new THREE.MeshBasicMaterial({ color: 0xff4500, emissive: 0xdd2200 });
+            const lavaRiver = new THREE.Mesh(lavaRiverGeo, lavaRiverMat);
+            lavaRiver.rotation.x = -Math.PI / 2;
+            lavaRiver.position.set(0, -50, -riverLength / 2);
+            volcanoCourseGroup.add(lavaRiver);
+            const geyserGeo = new THREE.CylinderGeometry(GEYSER_RADIUS, GEYSER_RADIUS, GEYSER_HEIGHT, 16);
+            const geyserMat = new THREE.MeshBasicMaterial({ color: 0xff6600, emissive: 0xcc3300 });
+            for (let z = -200; z > -riverLength; z -= 300 + Math.random() * 200) {
+                const x = (Math.random() - 0.5) * (LAVA_RIVER_WIDTH * 0.8);
+                const geyser = new THREE.Mesh(geyserGeo, geyserMat);
+                geyser.position.set(x, -50 + GEYSER_HEIGHT / 2, z);
+                geyser.scale.y = 0.01;
+                geyser.visible = false;
+                geyser.userData = { active: false, cooling: false, chargeTime: 0 };
+                volcanoGeysers.push(geyser);
+                volcanoCourseGroup.add(geyser);
+            }
+            const finishGeometry = new THREE.TorusGeometry(60, 10, 16, 100);
+            const finishMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00, shininess: 100 });
+            volcanoFinishLine = new THREE.Mesh(finishGeometry, finishMaterial);
+            volcanoFinishLine.position.set(0, 0, -riverLength);
+            volcanoCourseGroup.add(volcanoFinishLine);
+            scene.add(volcanoCourseGroup);
+        }
+        
+        function createDesertCourse() {
+            desertCourseGroup = new THREE.Group();
+            desertCourseGroup.position.set(0, DESERT_COURSE_Y, 0);
+            const wallMaterial = new THREE.MeshPhongMaterial({ color: 0xFADDAA });
+            const floorMaterial = new THREE.MeshPhongMaterial({ color: 0xFFE4B5 });
+            const relicMaterial = new THREE.MeshPhongMaterial({ color: 0x9370DB, emissive: 0x800080, shininess: 100 });
+            const floorGeo = new THREE.BoxGeometry(1000, 20, 1000);
+            const floor = new THREE.Mesh(floorGeo, floorMaterial);
+            floor.position.y = 10;
+            desertCourseGroup.add(floor);
+            const wallGeo = new THREE.BoxGeometry(1000, 500, 20);
+            const wall1 = new THREE.Mesh(wallGeo, wallMaterial); wall1.position.set(0, 250, -500); desertCourseGroup.add(wall1);
+            const wall2 = new THREE.Mesh(wallGeo, wallMaterial); wall2.position.set(0, 250, 500); desertCourseGroup.add(wall2);
+            const wallGeo2 = new THREE.BoxGeometry(20, 500, 1000);
+            const wall3 = new THREE.Mesh(wallGeo2, wallMaterial); wall3.position.set(-500, 250, 0); desertCourseGroup.add(wall3);
+            const wall4 = new THREE.Mesh(wallGeo2, wallMaterial); wall4.position.set(500, 250, 0); desertCourseGroup.add(wall4);
+            const tombGeo = new THREE.BoxGeometry(100, 100, 100);
+            const tombMat = new THREE.MeshPhongMaterial({ color: 0xaa8866 });
+            const tomb = new THREE.Mesh(tombGeo, tombMat);
+            tomb.position.set(0, 60, 0);
+            desertCourseGroup.add(tomb);
+            const doorGeo = new THREE.PlaneGeometry(80, 90);
+            const doorMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            tombDoor = new THREE.Mesh(doorGeo, doorMat);
+            tombDoor.position.set(0, 45, -51);
+            desertCourseGroup.add(tombDoor);
+            const relicGeo = new THREE.IcosahedronGeometry(10, 0);
+            const relicPositions = [
+                new THREE.Vector3(0, 120, 0), new THREE.Vector3(480, 50, 480), new THREE.Vector3(-480, 480, -480),
+                new THREE.Vector3(0, 50, 200), new THREE.Vector3(400, 250, -480)
+            ];
+            const pillarGeo = new THREE.CylinderGeometry(20, 20, 200, 16);
+            const pillar = new THREE.Mesh(pillarGeo, tombMat);
+            pillar.position.set(0, 110, 250);
+            desertCourseGroup.add(pillar);
+            relicPositions.forEach(pos => {
+                const relic = new THREE.Mesh(relicGeo, relicMaterial);
+                relic.position.copy(pos);
+                desertRelics.push(relic);
+                desertCourseGroup.add(relic);
+            });
+            scene.add(desertCourseGroup);
+        }
+
+        function createLighthouseCourse() {
+            lighthouseCourseGroup = new THREE.Group();
+            lighthouseCourseGroup.position.set(LIGHTHOUSE_START_POS.x, LIGHTHOUSE_START_POS.y, LIGHTHOUSE_START_POS.z);
+            const bgGeometry = new THREE.SphereGeometry(4000, 32, 32);
+            const bgMaterial = new THREE.MeshBasicMaterial({ color: 0x111122, side: THREE.BackSide });
+            lighthouseCourseGroup.add(new THREE.Mesh(bgGeometry, bgMaterial));
+            const seaGeo = new THREE.PlaneGeometry(800, 6000, 20, 100);
+            const seaMat = new THREE.MeshBasicMaterial({ color: 0x223355, emissive: 0x112244 });
+            const sea = new THREE.Mesh(seaGeo, seaMat);
+            sea.rotation.x = -Math.PI / 2;
+            sea.position.set(0, -50, -3000);
+            lighthouseCourseGroup.add(sea);
+            const waveGeo = new THREE.BoxGeometry(WAVE_WIDTH, WAVE_HEIGHT, 20);
+            const waveMat = new THREE.MeshBasicMaterial({ color: 0x4466aa, emissive: 0x224488 });
+            for (let i = 0; i < 10; i++) {
+                const wave = new THREE.Mesh(waveGeo, waveMat);
+                wave.visible = false;
+                wave.userData = { active: false, speed: (Math.random() * 100 + 150) * (Math.random() > 0.5 ? 1 : -1) };
+                lighthouseWaves.push(wave);
+                lighthouseCourseGroup.add(wave);
+            }
+            const finishGeometry = new THREE.BoxGeometry(100, 100, 100);
+            const finishMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00, emissive: 0xeeee00 });
+            lighthouseFinishLine = new THREE.Mesh(finishGeometry, finishMaterial);
+            lighthouseFinishLine.position.set(0, 0, -6000);
+            lighthouseCourseGroup.add(lighthouseFinishLine);
+            scene.add(lighthouseCourseGroup);
+        }
+
+        function createSkyCourse() {
+            skyCourseGroup = new THREE.Group();
+            skyCourseGroup.position.set(0, SKY_COURSE_Y, 0);
+            const bgGeometry = new THREE.SphereGeometry(4000, 32, 32);
+            const bgMaterial = new THREE.MeshBasicMaterial({ color: 0xcceeff, side: THREE.BackSide });
+            skyCourseGroup.add(new THREE.Mesh(bgGeometry, bgMaterial));
+            const platformMat = new THREE.MeshPhongMaterial({ color: 0xB8860B });
+            for (let i = 0; i < 10; i++) {
+                const w = 50 + Math.random() * 100, h = 30 + Math.random() * 50, d = 50 + Math.random() * 100;
+                const platform = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), platformMat);
+                platform.position.set((Math.random() - 0.5) * 1000, (Math.random() - 0.5) * 500, (Math.random() - 0.5) * 1000);
+                skyCourseGroup.add(platform);
+            }
+            const pigGeo = new THREE.SphereGeometry(PIG_RADIUS, 16, 16);
+            const pigMat = new THREE.MeshPhongMaterial({ color: 0xFFC0CB });
+            for (let i = 0; i < 5; i++) {
+                const pig = new THREE.Mesh(pigGeo, pigMat);
+                pig.visible = false;
+                pig.userData = { velocity: new THREE.Vector3() };
+                skyPigs.push(pig);
+                skyCourseGroup.add(pig);
+            }
+            scene.add(skyCourseGroup);
+        }
+
+        function createGauntletCourse() {
+            gauntletCourseGroup = new THREE.Group();
+            gauntletCourseGroup.position.set(GAUNTLET_START_POS.x, GAUNTLET_START_POS.y, GAUNTLET_START_POS.z);
+            
+            const iceMat = new THREE.MeshPhongMaterial({ color: 0x99ccff, shininess: 80, transparent: true, opacity: 0.8 });
+            const obstacleMat = new THREE.MeshPhongMaterial({ color: 0xff0000, emissive: 0x880000 });
+            
+            const tunnelLength = 10000;
+            const segments = 50;
+            const segmentLength = tunnelLength / segments;
+            const tunnelRadius = GAUNTLET_TUNNEL_RADIUS;
+            
+            const wallGeo = new THREE.CylinderGeometry(tunnelRadius + 10, tunnelRadius + 10, segmentLength, 16, 1, true);
+            const crusherGeo = new THREE.BoxGeometry(tunnelRadius * 2, 30, 30);
+            const spinnerGeo = new THREE.BoxGeometry(tunnelRadius * 1.5, 20, 20);
+
+            let currentPos = new THREE.Vector3(0, 0, 0);
+            let currentAngle = 0;
+            
+            for (let i = 0; i < segments; i++) {
+                currentPos.z -= segmentLength;
+                
+                // 1. Add Tunnel Wall
+                const wall = new THREE.Mesh(wallGeo, iceMat);
+                wall.position.copy(currentPos);
+                wall.rotation.x = Math.PI / 2;
+                gauntletCourseGroup.add(wall);
+                
+                // 2. Add Obstacles
+                const obsType = Math.random();
+                if (i > 2 && i < segments - 2) {
+                    if (obsType < 0.3) {
+                        // Horizontal Crusher
+                        const crusher = new THREE.Mesh(crusherGeo, obstacleMat);
+                        crusher.position.copy(currentPos);
+                        crusher.position.x = -tunnelRadius;
+                        crusher.userData = { type: 'crusher', speed: 80, dir: 1, startPos: crusher.position.clone() };
+                        gauntletObstacles.push(crusher);
+                        gauntletCourseGroup.add(crusher);
+                    } else if (obsType < 0.6) {
+                        // Vertical Crusher
+                        const crusher = new THREE.Mesh(crusherGeo, obstacleMat);
+                        crusher.rotation.z = Math.PI / 2;
+                        crusher.position.copy(currentPos);
+                        crusher.position.y = -tunnelRadius;
+                        crusher.userData = { type: 'crusher', speed: 80, dir: 1, startPos: crusher.position.clone() };
+                        gauntletObstacles.push(crusher);
+                        gauntletCourseGroup.add(crusher);
+                    } else if (obsType < 0.8) {
+                        // Spinner
+                        const spinner = new THREE.Mesh(spinnerGeo, obstacleMat);
+                        spinner.position.copy(currentPos);
+                        spinner.userData = { type: 'spinner', speed: 2.0, startPos: spinner.position.clone() };
+                        gauntletObstacles.push(spinner);
+                        gauntletCourseGroup.add(spinner);
+                    }
+                }
+                
+                // 3. Change Tunnel Direction
+                if (i % 5 === 0) {
+                    currentAngle = (Math.random() - 0.5) * 0.8;
+                }
+                currentPos.x += Math.sin(currentAngle) * segmentLength;
+                currentPos.y += Math.sin((Math.random() - 0.5) * 0.4) * segmentLength * 0.5; // Gentle up/down
+            }
+
+            // Finish Line
+            const finishGeometry = new THREE.TorusGeometry(60, 10, 16, 100);
+            const finishMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00, shininess: 100 });
+            gauntletFinishLine = new THREE.Mesh(finishGeometry, finishMaterial);
+            gauntletFinishLine.position.copy(currentPos);
+            gauntletFinishLine.position.z -= segmentLength;
+            gauntletCourseGroup.add(gauntletFinishLine);
+            
+            scene.add(gauntletCourseGroup);
+        }
+
+        function createJobAssets() {
+            // Delivery Package
+            const packageGeo = new THREE.BoxGeometry(3, 3, 3);
+            const packageMat = new THREE.MeshPhongMaterial({ color: 0xdaa520 }); // Goldenrod
+            deliveryPackage = new THREE.Mesh(packageGeo, packageMat);
+            deliveryPackage.position.set(-3, 1.5, 0); // On the back of the plane
+            deliveryPackage.visible = false;
+            plane.add(deliveryPackage); // Attach to plane
+
+            // Delivery Target
+            const targetGeo = new THREE.TorusGeometry(40, 4, 16, 100);
+            const targetMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00 });
+            deliveryTarget = new THREE.Mesh(targetGeo, targetMat);
+            deliveryTarget.position.set(canyonCenter.x, canyonCenter.y + 30, canyonCenter.z); // On desert island
+            deliveryTarget.rotation.x = Math.PI / 2;
+            deliveryTarget.visible = false;
+            scene.add(deliveryTarget);
+
+            // Dust Particles
+            dustParticles = new THREE.Group();
+            const particleGeo = new THREE.SphereGeometry(0.5, 8, 8);
+            const particleMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
+            for (let i = 0; i < 20; i++) {
+                const particle = new THREE.Mesh(particleGeo, particleMat);
+                particle.position.set(
+                    (Math.random() - 0.5) * 5, // Spread
+                    0,
+                    (Math.random() - 0.5) * 2
+                );
+                dustParticles.add(particle);
+            }
+            dustParticles.position.set(-5, -2, 0); // Behind tail
+            dustParticles.visible = false;
+            plane.add(dustParticles);
+        }
+
+        function createTrailParticles() {
+            planeTrail = new THREE.Group();
+            
+            const smokeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+            const smokeGeo = new THREE.SphereGeometry(1.5, 8, 8);
+            
+            const sparkleMat = new THREE.MeshBasicMaterial({ color: 0xffff00, emissive: 0xffff00, transparent: true, opacity: 0.8 });
+            const sparkleGeo = new THREE.SphereGeometry(0.5, 8, 8);
+            
+            for (let i = 0; i < 50; i++) {
+                // Smoke particle
+                const smoke = new THREE.Mesh(smokeGeo, smokeMat.clone());
+                smoke.position.set(0, 0, (i / 50) * -20); // Stream behind plane
+                smoke.userData = { type: 'smoke', life: (i / 50) };
+                planeTrail.add(smoke);
+                
+                // Sparkle particle
+                const sparkle = new THREE.Mesh(sparkleGeo, sparkleMat.clone());
+                sparkle.position.set(0, 0, (i / 50) * -15);
+                sparkle.userData = { type: 'sparkle', life: (i / 50), velocity: new THREE.Vector3() };
+                planeTrail.add(sparkle);
+            }
+            planeTrail.position.set(-5, 0, 0); // Emit from back of plane
+            plane.add(planeTrail);
+        }
+
+
+        // --- GAME LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            gameTime += delta;
+
+            updateDayNightCycle(delta);
+            updateNPCs(delta);
+            updateWorldElements(delta); // NEW for waterfall
+
+            if (forestPortal) forestPortal.rotation.y += 0.6 * delta;
+            if (cityPortal) cityPortal.rotation.y -= 0.6 * delta;
+            if (volcanoPortal) volcanoPortal.rotation.y += 0.6 * delta;
+            if (desertPortal) desertPortal.rotation.y += 0.6 * delta;
+            if (lighthousePortal) lighthousePortal.rotation.y -= 0.6 * delta;
+            if (gauntletPortal) gauntletPortal.rotation.y += 0.8 * delta;
+            
+            for (const coin of coins) {
+                if (coin.visible) coin.rotation.y += 1.2 * delta;
+            }
+
+            const propeller = plane.getObjectByName("propeller");
+            if (propeller) propeller.rotation.x += 30 * delta;
+
+            // Update trail
+            updateTrailParticles(delta);
+
+            switch (gameState) {
+                case 'playing':
+                case 'job_board': // Allow plane physics to run while board is open
+                    updatePlaying(delta);
+                    break;
+                case 'minigame_playing':
+                    updateMinigameForest(delta);
+                    break;
+                case 'minigame_volcano_playing':
+                    updateMinigameVolcano(delta);
+                    break;
+                case 'minigame_desert_playing':
+                    updateMinigameDesert(delta);
+                    break;
+                case 'minigame_lighthouse_playing':
+                    updateMinigameLighthouse(delta);
+                    break;
+                case 'minigame_sky_playing':
+                    updateMinigameSky(delta);
+                    break;
+                case 'minigame_gauntlet_playing': // NEW
+                    updateMinigameGauntlet(delta);
+                    break;
+            }
+ 
+            updateCamera();
+            renderer.render(scene, camera);
+        }
+
+        // --- UPDATE FUNCTIONS ---
+        function updateDayNightCycle(delta) {
+            const cycleDuration = 60 * 5; // 5 minute day
+            const timeOfDay = (gameTime % cycleDuration) / cycleDuration;
+            const sunAngle = timeOfDay * Math.PI * 2;
+            directionalLight.position.set(Math.cos(sunAngle) * 1000, Math.sin(sunAngle) * 1000, 500);
+            const sunY = directionalLight.position.y;
+            const nightLerp = 0.02, dayLerp = 0.01;
+            if (sunY < 100) { // Night
+                scene.background.lerp(nightColor, nightLerp);
+                scene.fog.color.lerp(nightColor, nightLerp);
+                scene.fog.far = nightFogFar;
+                directionalLight.intensity = 0.1;
+                ambientLight.intensity = 0.2;
+                lighthouseLight.visible = true;
+                townLights.forEach(l => l.visible = true);
+                if (volcanoLavaMaterial) volcanoLavaMaterial.emissive.set(0xff4500);
+            } else { // Day
+                scene.background.lerp(dayColor, dayLerp);
+                scene.fog.color.lerp(dayColor, dayLerp);
+                scene.fog.far = dayFogFar;
+                directionalLight.intensity = 1.0;
+                ambientLight.intensity = 0.6;
+                lighthouseLight.visible = false;
+                townLights.forEach(l => l.visible = false);
+                if (volcanoLavaMaterial) volcanoLavaMaterial.emissive.set(0x000000);
+            }
+        }
+
+        function updateNPCs(delta) {
+            const time = gameTime;
+            if (npcPlanes[0]) {
+                const p1 = npcPlanes[0];
+                p1.position.x = Math.cos(time * 0.1) * 1200;
+                p1.position.z = Math.sin(time * 0.1) * 1200;
+                p1.position.y = 300;
+                p1.lookAt(Math.cos(time * 0.1 + 0.1) * 1200, 300, Math.sin(time * 0.1 + 0.1) * 1200);
+                p1.getObjectByName("propeller").rotation.x += 30 * delta;
+            }
+            if (npcPlanes[1]) {
+                const p2 = npcPlanes[1];
+                p2.position.x = Math.cos(time * -0.07) * 800;
+                p2.position.z = Math.sin(time * -0.07) * 800;
+                p2.position.y = 450;
+                p2.lookAt(Math.cos(time * -0.07 + 0.1) * 800, 450, Math.sin(time * -0.07 + 0.1) * 800);
+                p2.getObjectByName("propeller").rotation.x += 30 * delta;
+            }
+            for (const boat of npcBoats) {
+                boat.translateZ(boat.userData.speed * delta);
+                if (boat.position.length() > 3000) {
+                    boat.position.set((Math.random() - 0.5) * 2000, OCEAN_HEIGHT + 2, (Math.random() - 0.5) * 2000);
+                    boat.rotation.y = Math.random() * Math.PI * 2;
+                }
+            }
+            for (const flock of birdFlocks) {
+                flock.position.add(flock.userData.speed.clone().multiplyScalar(delta));
+                flock.rotation.y += 0.1 * delta;
+                if (flock.position.x > 1500 || flock.position.x < -1500 || flock.position.z > 1500 || flock.position.z < -1500) {
+                    flock.userData.speed.x *= -1;
+                    flock.userData.speed.z *= -1;
+                }
+            }
+        }
+        
+        function updateWorldElements(delta) {
+            // Animate waterfall mist
+            if (waterfallMist) {
+                waterfallMist.children.forEach(p => {
+                    p.position.y -= (10 + Math.random() * 10) * delta;
+                    p.position.x += (Math.random() - 0.5) * 5 * delta;
+                    if (p.position.y < -30) {
+                        p.position.y = 30;
+                        p.position.x = (Math.random() - 0.5) * 100;
+                    }
+                });
+            }
+        }
+
+        function updateTrailParticles(delta) {
+            if (currentTrail === 'none') {
+                planeTrail.visible = false;
+                return;
+            }
+            
+            planeTrail.visible = true;
+            
+            planeTrail.children.forEach(p => {
+                const isCorrectType = p.userData.type === currentTrail;
+                p.visible = isCorrectType;
+
+                if (isCorrectType) {
+                    p.userData.life += delta * 0.5; // Speed of trail
+                    if (p.userData.life > 1) {
+                        p.userData.life = 0; // Reset life
+                        if (p.userData.type === 'sparkle') {
+                            // Reset sparkle velocity
+                            p.userData.velocity.set(
+                                (Math.random() - 0.5) * 10,
+                                (Math.random() - 0.5) * 10,
+                                (Math.random() - 0.5) * 10
+                            );
+                        }
+                    }
+
+                    if (p.userData.type === 'smoke') {
+                        const s = 1.0 + p.userData.life * 3.0; // Grow
+                        p.scale.set(s, s, s);
+                        p.material.opacity = 0.3 * (1.0 - p.userData.life);
+                        p.position.z = p.userData.life * -40; // Stream backwards
+                    } 
+                    else if (p.userData.type === 'sparkle') {
+                        p.position.add(p.userData.velocity.clone().multiplyScalar(delta));
+                        p.material.opacity = 1.0 - p.userData.life;
+                        p.position.z = p.userData.life * -30;
+                    }
+                }
+            });
+        }
+        
+        function updatePlaying(delta) {
+            // --- Check for Landing ---
+            const onRunway = (plane.position.x > -40 && plane.position.x < 40 &&
+                              plane.position.z > -200 && plane.position.z < 400);
+            const isLanded = onRunway && 
+                               plane.position.y < (ISLAND_HEIGHT_MAIN + CRASH_BUFFER) && 
+                               currentPlaneSpeed < LANDING_SPEED &&
+                               Math.abs(plane.rotation.z) < LANDING_PITCH;
+
+            if (isLanded && currentJob.type === 'none' && gameState === 'playing') {
+                enterJobBoard();
+            }
+            
+            // If job board is open, pause plane controls
+            if (gameState === 'job_board') {
+                currentPlaneSpeed = 0; // Stop the plane
+            } else {
+                updatePlaneRotation(delta);
+            }
+
+            // --- Crash Detection ---
+            if (!onRunway && gameState !== 'job_board') {
+                const distFromCenter = new THREE.Vector2(plane.position.x, plane.position.z).length();
+                // Main island crash
+                if (distFromCenter < ISLAND_RADIUS_MAIN && plane.position.y < (ISLAND_HEIGHT_MAIN + CRASH_BUFFER)) {
+                     // Check for cave exception
+                    if (plane.position.distanceTo(caveEntrancePos) > CAVE_RADIUS) {
+                         showCrashScreen(); return;
+                    }
+                }
+                
+                // Ocean crash
+                if (plane.position.y < (OCEAN_HEIGHT + CRASH_BUFFER)) {
+                    const plane2DPos = new THREE.Vector2(plane.position.x, plane.position.z);
+                    const desert2DPos = new THREE.Vector2(canyonCenter.x, canyonCenter.z);
+                    const arctic2DPos = new THREE.Vector2(arcticIslandPos.x, arcticIslandPos.z);
+                    
+                    const onDesert = plane2DPos.distanceTo(desert2DPos) < 600;
+                    const onArctic = plane2DPos.distanceTo(arctic2DPos) < 700;
+                    
+                    if (!onDesert && !onArctic) {
+                         showCrashScreen(); return; // Crashed in open ocean
+                    }
+                }
+            }
+
+
+            // --- Speed Control ---
+            if (gameState !== 'job_board') {
+                const currentBaseSpeed = basePlaneSpeed + (speedLevel - 1) * speedUpgradeAmount;
+
+                if (keyStates['ShiftLeft']) {
+                    const currentBraking = brakingForce + (brakesLevel - 1) * brakingUpgradeAmount;
+                    currentPlaneSpeed -= (acceleration + currentBraking) * delta;
+                    if (currentPlaneSpeed < 0) currentPlaneSpeed = 0;
+                } else {
+                    if (currentPlaneSpeed < currentBaseSpeed) {
+                        currentPlaneSpeed += acceleration * delta;
+                        if (currentPlaneSpeed > currentBaseSpeed) {
+                            currentPlaneSpeed = currentBaseSpeed;
+                        }
+                    } else if (currentPlaneSpeed > currentBaseSpeed) {
+                        currentPlaneSpeed -= speedDecay * delta;
+                    }
+                }
+            }
+
+            // Ring collision
+            for (const ring of rings) {
+                if (!ring.userData.used && plane.position.distanceTo(ring.position) < ringCollisionRadius) {
+                    currentPlaneSpeed = Math.min(maxPlaneSpeed, currentPlaneSpeed + speedBoostAmount);
+                    ring.userData.used = true;
+                    ring.material.color.set(0x888888);
+                }
+            }
+            speedIndicator.textContent = `${(currentPlaneSpeed / (basePlaneSpeed + (speedLevel - 1) * speedUpgradeAmount)).toFixed(1)}x`;
+
+            // --- Movement ---
+            const forward = new THREE.Vector3(1, 0, 0); 
+            forward.applyQuaternion(plane.quaternion);
+            forward.multiplyScalar(currentPlaneSpeed * delta);
+            plane.position.add(forward);
+
+            // --- Map Boundary ---
+            if (plane.position.length() > MAP_BOUNDARY) {
+                plane.position.copy(START_POSITION);
+                plane.quaternion.copy(START_QUATERNION);
+                currentPlaneSpeed = basePlaneSpeed;
+                showMessage("Flew too far! Returning to the main island...");
+            }
+            
+            // --- Coin Collision ---
+            for (const coin of coins) {
+                if (coin.visible && plane.position.distanceTo(coin.position) < COIN_RADIUS) {
+                    coin.visible = false;
+                    playerCurrency += COIN_REWARD;
+                    updateCurrencyUI();
+                }
+            }
+            
+            // --- Portal Collision (only if no job) ---
+            if (currentJob.type === 'none') {
+                if (plane.position.distanceTo(forestPortal.position) < PORTAL_RADIUS) enterForestMinigameIntro();
+                if (plane.position.distanceTo(cityPortal.position) < PORTAL_RADIUS) enterShopMenu();
+                if (plane.position.distanceTo(volcanoPortal.position) < PORTAL_RADIUS) enterVolcanoMinigameIntro();
+                if (plane.position.distanceTo(desertPortal.position) < PORTAL_RADIUS) enterDesertMinigameIntro();
+                if (plane.position.distanceTo(lighthousePortal.position) < PORTAL_RADIUS) enterLighthouseMinigameIntro();
+                if (plane.position.distanceTo(skyPortal.position) < PORTAL_RADIUS) enterSkyMinigameIntro();
+                if (gauntletPortal && plane.position.distanceTo(gauntletPortal.position) < PORTAL_RADIUS) enterGauntletMinigameIntro(); // NEW
+            }
+            
+            // --- Update Active Job ---
+            updateJob(delta);
+        }
+        
+        function updateMinigameForest(delta) {
+            updatePlaneRotation(delta);
+            // currentPlaneSpeed set by difficulty
+            const forward = new THREE.Vector3(1, 0, 0); 
+            forward.applyQuaternion(plane.quaternion);
+            forward.multiplyScalar(currentPlaneSpeed * delta);
+            plane.position.add(forward);
+            minigameTimer = (clock.getElapsedTime() - minigameStartTime);
+            minigameTimerElement.textContent = minigameTimer.toFixed(2) + 's';
+            for (const obstacle of forestObstacles) {
+                if (obstacle.parent.visible && plane.position.distanceTo(obstacle.getWorldPosition(new THREE.Vector3())) < OBSTACLE_RADIUS) {
+                    crashForestMinigame(); return;
+                }
+            }
+            for (const checkpoint of forestCheckpoints) {
+                if (!checkpoint.userData.used && plane.position.distanceTo(checkpoint.getWorldPosition(new THREE.Vector3())) < CHECKPOINT_RADIUS) {
+                    checkpoint.userData.used = true;
+                    checkpoint.material.color.set(0x00ff00);
+                }
+            }
+            if (plane.position.distanceTo(forestFinishLine.getWorldPosition(new THREE.Vector3())) < CHECKPOINT_RADIUS) {
+                finishForestMinigame(); return;
+            }
+        }
+        
+        function updateMinigameVolcano(delta) {
+            updatePlaneRotation(delta);
+            currentPlaneSpeed = basePlaneSpeed * 1.2;
+            const forward = new THREE.Vector3(1, 0, 0); 
+            forward.applyQuaternion(plane.quaternion);
+            forward.multiplyScalar(currentPlaneSpeed * delta);
+            plane.position.add(forward);
+            minigameTimer = (clock.getElapsedTime() - minigameStartTime);
+            minigameTimerElement.textContent = minigameTimer.toFixed(2) + 's';
+
+            const meteorSpawnRate = currentMinigameDifficulty === 'hard' ? 0.05 : 0.03;
+            if (Math.random() < meteorSpawnRate) {
+                const meteorGeo = new THREE.SphereGeometry(METEOR_RADIUS, 12, 12);
+                const meteorMat = new THREE.MeshBasicMaterial({ color: 0xff8800, emissive: 0xcc3300 });
+                const meteor = new THREE.Mesh(meteorGeo, meteorMat);
+                const spawnPos = plane.position.clone();
+                const ahead = new THREE.Vector3(0, 0, -800).applyQuaternion(plane.quaternion);
+                spawnPos.add(ahead);
+                spawnPos.y += 500;
+                spawnPos.x += (Math.random() - 0.5) * 400;
+                meteor.position.copy(spawnPos);
+                meteor.userData.velocity = new THREE.Vector3(0, -250, 0);
+                volcanoMeteors.push(meteor);
+                volcanoCourseGroup.add(meteor);
+            }
+            if (Math.random() < 0.01) {
+                const availableGeysers = volcanoGeysers.filter(g => !g.userData.active && !g.userData.cooling);
+                if (availableGeysers.length > 0) {
+                    const geyser = availableGeysers[Math.floor(Math.random() * availableGeysers.length)];
+                    geyser.userData.active = true;
+                    geyser.userData.chargeTime = 1.0 + Math.random() * 0.5;
+                    geyser.visible = true;
+                    geyser.scale.y = 0.01;
+                }
+            }
+            for (let i = volcanoMeteors.length - 1; i >= 0; i--) {
+                const meteor = volcanoMeteors[i];
+                meteor.position.add(meteor.userData.velocity.clone().multiplyScalar(delta));
+                if (plane.position.distanceTo(meteor.position) < METEOR_RADIUS + 5) {
+                    crashVolcanoMinigame(); return;
+                }
+                if (meteor.position.y < VOLCANO_COURSE_Y - 200) {
+                    volcanoCourseGroup.remove(meteor);
+                    volcanoMeteors.splice(i, 1);
+                }
+            }
+            for (const geyser of volcanoGeysers) {
+                if (geyser.userData.active) {
+                    if (geyser.userData.chargeTime > 0) {
+                        geyser.userData.chargeTime -= delta;
+                        geyser.visible = Math.floor(clock.getElapsedTime() * 10) % 2 === 0;
+                    } else {
+                        geyser.visible = true;
+                        geyser.scale.y = Math.min(1.0, geyser.scale.y + 2.0 * delta);
+                        if (geyser.scale.y >= 1.0) {
+                            geyser.userData.active = false;
+                            geyser.userData.cooling = true;
+                        }
+                    }
+                } else if (geyser.userData.cooling) {
+                    geyser.scale.y = Math.max(0.01, geyser.scale.y - 0.5 * delta);
+                    if (geyser.scale.y <= 0.01) {
+                        geyser.userData.cooling = false;
+                        geyser.visible = false;
+                    }
+                }
+                if (geyser.visible && geyser.scale.y > 0.1) {
+                    const geyserWorldPos = geyser.getWorldPosition(new THREE.Vector3());
+                    if (plane.position.distanceTo(geyserWorldPos) < GEYSER_RADIUS + 5 &&
+                        plane.position.y < geyserWorldPos.y + (GEYSER_HEIGHT / 2) * geyser.scale.y) {
+                        crashVolcanoMinigame(); return;
+                    }
+                }
+            }
+            if (plane.position.distanceTo(volcanoFinishLine.getWorldPosition(new THREE.Vector3())) < CHECKPOINT_RADIUS) { 
+                finishVolcanoMinigame(); return; 
+            }
+        }
+        
+        function updateMinigameDesert(delta) {
+            updatePlaneRotation(delta);
+            currentPlaneSpeed = basePlaneSpeed;
+            const forward = new THREE.Vector3(1, 0, 0); 
+            forward.applyQuaternion(plane.quaternion);
+            forward.multiplyScalar(currentPlaneSpeed * delta);
+            plane.position.add(forward);
+            minigameTimer -= delta;
+            if (minigameTimer <= 0) {
+                minigameTimer = 0;
+                loseDesertMinigame(); return;
+            }
+            minigameTimerElement.textContent = minigameTimer.toFixed(2) + 's';
+            if (tombDoor.position.y > -45) {
+                tombDoor.position.y -= TOMB_DOOR_SPEED * delta;
+            }
+            for (const relic of desertRelics) {
+                if (relic.visible) {
+                    if (plane.position.distanceTo(relic.getWorldPosition(new THREE.Vector3())) < DESERT_RELIC_RADIUS) {
+                        relic.visible = false;
+                        relicsCollected++;
+                        relicCounterElement.textContent = `Relics: ${relicsCollected} / 5`;
+                        if (relicsCollected >= 5) {
+                            finishDesertMinigame(); return;
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateMinigameLighthouse(delta) {
+            updatePlaneRotation(delta);
+            currentPlaneSpeed = basePlaneSpeed;
+            const forward = new THREE.Vector3(1, 0, 0); 
+            forward.applyQuaternion(plane.quaternion);
+            forward.multiplyScalar(currentPlaneSpeed * delta);
+            plane.position.add(forward);
+            minigameTimer = (clock.getElapsedTime() - minigameStartTime);
+            minigameTimerElement.textContent = minigameTimer.toFixed(2) + 's';
+            
+            const waveSpawnRate = currentMinigameDifficulty === 'hard' ? 0.08 : 0.05;
+            if (Math.random() < waveSpawnRate) {
+                const wave = lighthouseWaves.find(w => !w.userData.active);
+                if (wave) {
+                    wave.visible = true;
+                    wave.userData.active = true;
+                    wave.position.set(0, (WAVE_HEIGHT / 2) - 50, plane.position.z - 1000);
+                    wave.position.x = (WAVE_WIDTH / 2 + 400) * (wave.userData.speed > 0 ? -1 : 1);
+                }
+            }
+            for (const wave of lighthouseWaves) {
+                if (wave.userData.active) {
+                    wave.position.x += wave.userData.speed * delta;
+                    const waveBox = new THREE.Box3().setFromObject(wave);
+                    const planeBox = new THREE.Box3().setFromObject(plane);
+                    if (waveBox.intersectsBox(planeBox)) {
+                         crashLighthouseMinigame(); return;
+                    }
+                    if ((wave.userData.speed > 0 && wave.position.x > WAVE_WIDTH / 2 + 500) ||
+                        (wave.userData.speed < 0 && wave.position.x < -(WAVE_WIDTH / 2 + 500))) {
+                        wave.userData.active = false;
+                        wave.visible = false;
+                    }
+                }
+            }
+            if (plane.position.distanceTo(lighthouseFinishLine.getWorldPosition(new THREE.Vector3())) < 50) {
+                finishLighthouseMinigame(); return; 
+            }
+        }
+        
+        function updateMinigameSky(delta) {
+            updatePlaneRotation(delta);
+            currentPlaneSpeed = basePlaneSpeed * 1.2;
+            const forward = new THREE.Vector3(1, 0, 0); 
+            forward.applyQuaternion(plane.quaternion);
+            forward.multiplyScalar(currentPlaneSpeed * delta);
+            plane.position.add(forward);
+            minigameTimer -= delta;
+            if (minigameTimer <= 0) {
+                minigameTimer = 0;
+                loseSkyMinigame(); return;
+            }
+            minigameTimerElement.textContent = minigameTimer.toFixed(2) + 's';
+            const bounds = { x: 500, y: 300, z: 500 };
+            const pigSpeed = currentMinigameDifficulty === 'hard' ? 75 : 50;
+            for (const pig of skyPigs) {
+                if (pig.visible) {
+                    pig.userData.velocity.x += (Math.random() - 0.5) * 0.5; // Add randomness
+                    pig.userData.velocity.z += (Math.random() - 0.5) * 0.5;
+                    pig.userData.velocity.clampLength(0, pigSpeed);
+                    
+                    pig.position.add(pig.userData.velocity.clone().multiplyScalar(delta));
+                    
+                    if (pig.position.x > bounds.x || pig.position.x < -bounds.x) pig.userData.velocity.x *= -1.1;
+                    if (pig.position.y > bounds.y || pig.position.y < -bounds.y) pig.userData.velocity.y *= -1.1;
+                    if (pig.position.z > bounds.z || pig.position.z < -bounds.z) pig.userData.velocity.z *= -1.1;
+                    
+                    if (plane.position.distanceTo(pig.getWorldPosition(new THREE.Vector3())) < PIG_RADIUS + 5) {
+                        pig.visible = false;
+                        pigsCollected++;
+                        pigCounterElement.textContent = `Pigs: ${pigsCollected} / 5`;
+                        if (pigsCollected >= 5) {
+                            finishSkyMinigame(); return;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // NEW GAUNTLET UPDATE
+        function updateMinigameGauntlet(delta) {
+            updatePlaneRotation(delta);
+            // currentPlaneSpeed set by start function
+            const forward = new THREE.Vector3(1, 0, 0); 
+            forward.applyQuaternion(plane.quaternion);
+            forward.multiplyScalar(currentPlaneSpeed * delta);
+            plane.position.add(forward);
+            
+            minigameTimer = (clock.getElapsedTime() - minigameStartTime);
+            minigameTimerElement.textContent = minigameTimer.toFixed(2) + 's';
+            
+            const planeWorldPos = plane.position.clone();
+            const courseWorldPos = gauntletCourseGroup.position.clone();
+
+            // 1. Check Wall Collisions (simple radius check)
+            // We need to find the closest point on the "centerline" of the tunnel
+            // This is complex. For now, just check distance from center.
+            // A simple bounding box for the plane
+            const planeBox = new THREE.Box3().setFromObject(plane);
+
+            // 2. Update and Check Obstacles
+            for (const obstacle of gauntletObstacles) {
+                const obsWorldPos = obstacle.getWorldPosition(new THREE.Vector3());
+                
+                if (obstacle.userData.type === 'crusher') {
+                    obstacle.position.x += obstacle.userData.dir * obstacle.userData.speed * delta;
+                    if (Math.abs(obstacle.position.x - obstacle.userData.startPos.x) > GAUNTLET_TUNNEL_RADIUS - 15) {
+                        obstacle.userData.dir *= -1;
+                    }
+                } else if (obstacle.userData.type === 'spinner') {
+                    obstacle.rotation.z += obstacle.userData.speed * delta;
+                }
+                
+                // Simple BBox collision
+                const obsBox = new THREE.Box3().setFromObject(obstacle);
+                if (planeBox.intersectsBox(obsBox)) {
+                    crashGauntletMinigame(); return;
+                }
+            }
+            
+            // 3. Check Finish Line
+            if (plane.position.distanceTo(gauntletFinishLine.getWorldPosition(new THREE.Vector3())) < CHECKPOINT_RADIUS) {
+                finishGauntletMinigame(); return;
+            }
+            
+            // 4. Check Tunnel Boundary (approximate)
+            if (plane.position.x > courseWorldPos.x + GAUNTLET_TUNNEL_RADIUS ||
+                plane.position.x < courseWorldPos.x - GAUNTLET_TUNNEL_RADIUS ||
+                plane.position.y > courseWorldPos.y + GAUNTLET_TUNNEL_RADIUS ||
+                plane.position.y < courseWorldPos.y - GAUNTLET_TUNNEL_RADIUS)
+            {
+                // This is a very rough check, but better than nothing
+                // A real implementation would use the tunnel path
+                // For now, let's just check if we are near an obstacle
+                let nearObstacle = false;
+                for(const obs of gauntletObstacles) {
+                    if(plane.position.distanceTo(obs.getWorldPosition(new THREE.Vector3())) < GAUNTLET_TUNNEL_RADIUS * 2) {
+                        nearObstacle = true;
+                        break;
+                    }
+                }
+                // Only crash if we are near an obstacle and outside the central radius
+                if(nearObstacle) {
+                     crashGauntletMinigame(); return;
+                }
+            }
+        }
+        
+        // Shared rotation logic
+        function updatePlaneRotation(delta) {
+            const currentHandling = handlingUpgradeAmount * (handlingLevel - 1);
+            
+            if (keyStates['ArrowUp'] || keyStates['KeyW']) plane.rotateZ(-(pitchSpeed + currentHandling) * delta);
+            if (keyStates['ArrowDown'] || keyStates['KeyS']) plane.rotateZ((pitchSpeed + currentHandling) * delta);
+            if (keyStates['ArrowLeft'] || keyStates['KeyA']) plane.rotateY((yawSpeed + currentHandling) * delta);
+            if (keyStates['ArrowRight'] || keyStates['KeyD']) plane.rotateY(-(yawSpeed + currentHandling) * delta);
+            if (keyStates['KeyQ']) plane.rotateX((rollSpeed + currentHandling) * delta);
+            if (keyStates['KeyE']) plane.rotateX(-(rollSpeed + currentHandling) * delta);
+        }
+
+        function updateCamera() {
+            const offset = new THREE.Vector3(-25, 8, 0); 
+            offset.applyQuaternion(plane.quaternion); 
+            const cameraTargetPosition = plane.position.clone().add(offset);
+            
+            const isMinigame = gameState.startsWith('minigame_');
+            const lerpFactor = isMinigame ? 0.1 : 0.05;
+            
+            camera.position.lerp(cameraTargetPosition, lerpFactor);
+            
+            if (isMinigame) {
+                let lookAheadAmount = 50;
+                if (gameState === 'minigame_volcano_playing') lookAheadAmount = 150;
+                else if (gameState === 'minigame_desert_playing') lookAheadAmount = 100;
+                else if (gameState === 'minigame_lighthouse_playing') lookAheadAmount = 200;
+                else if (gameState === 'minigame_sky_playing') lookAheadAmount = 100;
+                const lookAtTarget = plane.position.clone().add(new THREE.Vector3(lookAheadAmount, 0, 0).applyQuaternion(plane.quaternion));
+                camera.lookAt(lookAtTarget);
+            } else {
+                 camera.lookAt(plane.position);
+            }
+        }
+
+        // --- UTILITY ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- START ---
+        init();
+
+    </script>
+</body>
+</html>
