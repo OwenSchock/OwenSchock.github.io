@@ -25,6 +25,9 @@
             border-image: linear-gradient(to bottom, #7a7a7a, #3a3a3a) 1;
             box-shadow: 0 0 15px #000 inset;
             image-rendering: pixelated; /* Crisp text */
+            /* New: Responsive sizing */
+            width: 100%;
+            height: auto; /* Height will be set by JS */
         }
 
         /* UI Panel Styling */
@@ -34,7 +37,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 235, 150, 0.05) inset;
             color: #c0c0c0;
-            /* No overflow-y: auto here, let the grid handle it */
+            overflow-y: auto;
         }
 
         .ui-title {
@@ -70,10 +73,13 @@
 
         /* Game Log */
         #gameLog {
-            height: 200px; /* Fixed height for the log area */
+            height: 200px;
             font-size: 0.875rem;
             line-height: 1.25rem;
-            overflow-y: scroll; /* Log is the only thing that scrolls */
+            border-top: 2px solid #5a5a5a;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            overflow-y: scroll;
             scrollbar-width: thin;
             scrollbar-color: #5a5a5a #2a2a2a;
         }
@@ -103,10 +109,9 @@
             list-style: none;
             padding: 0;
             margin: 0;
-            height: 150px; /* Fixed height */
+            min-height: 150px; /* Ensure it has height */
+            max-height: 200px; /* Max height before scroll */
             overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #5a5a5a #2a2a2a;
         }
         .inventory-item {
             padding: 4px 8px;
@@ -114,7 +119,7 @@
             cursor: pointer;
             color: #b0b0b0;
             transition: all 0.2s ease;
-            position: relative; /* For tooltip positioning */
+            position: relative; /* For tooltip */
         }
         .inventory-item:hover {
             background-color: #3a3a3a;
@@ -139,7 +144,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            position: relative; /* For tooltip positioning */
+            position: relative; /* For tooltip */
         }
         .equipment-slot.filled {
             border-style: solid;
@@ -163,10 +168,9 @@
             list-style: none;
             padding: 0;
             margin: 0;
-            height: 120px; /* Fixed height */
+            min-height: 100px;
+            max-height: 150px;
             overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #5a5a5a #2a2a2a;
         }
         .perk-item {
             padding: 4px 8px;
@@ -387,66 +391,57 @@
             border-color: #6a5a4a;
             color: #f0e68c;
         }
-
-        /* --- Item Tooltip (NEW) --- */
+        
+        /* Item Tooltip (NEW) */
         #itemTooltip {
-            position: absolute;
-            display: none; /* Hidden by default */
+            position: fixed; /* Use fixed to follow mouse */
+            display: none;
             width: 280px;
-            background-color: #1f1f1f;
+            background-color: #1a1a1a;
             border: 2px solid #6a5a4a;
-            border-radius: 6px;
-            padding: 12px;
+            border-radius: 4px;
+            padding: 1rem;
             color: #c0c0c0;
-            font-size: 0.9rem;
-            z-index: 200; /* On top of everything */
-            pointer-events: none; /* Don't let it block mouse events */
+            z-index: 200;
+            pointer-events: none; /* So it doesn't block mouse events */
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
         #tooltipTitle {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 8px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #4a4a4a;
-        }
-        #tooltipBody {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-        }
-        #tooltipBody span {
-            padding: 2px 0;
-        }
-        #tooltipBody .stat-value {
             color: #f0e68c;
             font-weight: bold;
-            text-align: right;
-        }
-        #tooltipBody .stat-name {
-            color: #9a9a9a;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #4a4a4a;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
         }
         #tooltipTier {
             font-style: italic;
-            font-size: 0.8rem;
-            text-align: right;
-            color: #9a9a9a;
-            margin-top: 8px;
+            color: #7a7a7a;
+            font-size: 0.9rem;
+            float: right;
+        }
+        #tooltipStats {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #tooltipStats li {
+            padding: 2px 0;
         }
 
     </style>
 </head>
 <body class="bg-gray-900 text-gray-300 p-4 md:p-8">
 
-    <div class="max-w-screen-2xl mx-auto"> <!-- Changed to 2xl for more space -->
+    <div class="max-w-7xl mx-auto">
         <h1 class="text-4xl font-bold text-center mb-4 text-yellow-300" style="text-shadow: 0 0 10px rgba(240, 230, 140, 0.5);">PROJECT ATOM-CRAWLER</h1>
         
         <!-- NEW 4-COLUMN LAYOUT -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-            <!-- Game Area (Col 1 & 2) -->
-            <div class="lg:col-span-2 relative">
-                <canvas id="gameCanvas" width="800" height="800"></canvas>
+            <!-- Game Area (now spans 2 columns) -->
+            <div class="md:col-span-2 relative" id="game-canvas-container">
+                <canvas id="gameCanvas"></canvas> <!-- Removed fixed width/height -->
                 
                 <!-- Game Over Screen -->
                 <div id="gameOverScreen">
@@ -466,9 +461,8 @@
                 </div>
             </div>
 
-            <!-- UI Column 3: Character Stats -->
-            <div class="lg:col-span-1 flex flex-col gap-4">
-                
+            <!-- NEW "Character" Column (Column 3) -->
+            <div class="md:col-span-1 flex flex-col gap-4">
                 <!-- Player Stats Panel -->
                 <div class="ui-panel p-4">
                     <h2 class="ui-title text-xl font-bold mb-3 pb-2">V.T.S. (Vault-Tec System)</h2>
@@ -533,8 +527,8 @@
                 </div>
             </div>
 
-            <!-- UI Column 4: Gear & Inventory -->
-            <div class="lg:col-span-1 flex flex-col gap-4">
+            <!-- NEW "Gear" Column (Column 4) -->
+            <div class="md:col-span-1 flex flex-col gap-4">
                 <!-- Equipment Panel -->
                 <div class="ui-panel p-4">
                     <h2 class="ui-title text-xl font-bold mb-3 pb-2">EQUIPMENT</h2>
@@ -562,13 +556,10 @@
                         <li class="text-gray-500 italic">...empty...</li>
                     </ul>
                 </div>
-
-                <!-- Empty space to balance columns, or add more panels later -->
-                <div class="flex-grow"></div>
             </div>
 
-            <!-- Log Panel (Spans all 4 columns) -->
-            <div class="ui-panel p-4 lg:col-span-4">
+            <!-- Log Panel (now spans all 4 columns) -->
+            <div class="ui-panel p-4 md:col-span-4">
                 <h2 class="ui-title text-xl font-bold mb-3 pb-2">SYSTEM LOG</h2>
                 <div class="controls text-center mb-2">
                     [ CONTROLS: (WASD / Arrows) Move | 'g' (Get) | 'h' (Heal) | 'f' (Fire) | 'x' (Scrap) | 'c' (Codex) | 'Esc' (Cancel) ]
@@ -583,11 +574,10 @@
 
     <!-- Item Tooltip (NEW) -->
     <div id="itemTooltip">
-        <h3 id="tooltipTitle" class="text-yellow-300">Item Name</h3>
-        <div id="tooltipBody">
+        <h3 id="tooltipTitle">Item Name <span id="tooltipTier">[Tier X]</span></h3>
+        <ul id="tooltipStats">
             <!-- Stats added by JS -->
-        </div>
-        <div id="tooltipTier">Tier 1</div>
+        </ul>
     </div>
 
     <script>
@@ -596,6 +586,7 @@
         const ctx = canvas.getContext('2d');
         const gameOverScreen = document.getElementById('gameOverScreen');
         const dialogScreen = document.getElementById('dialogScreen');
+        const canvasContainer = document.getElementById('game-canvas-container'); // NEW
 
         // Game Grid settings
         const TILE_SIZE = 20;
@@ -697,10 +688,10 @@
         const inventoryList = document.getElementById('inventoryList');
         const inventoryTitle = document.getElementById('inventoryTitle');
         const perkList = document.getElementById('perkList');
-        const itemTooltip = document.getElementById('itemTooltip'); // New Tooltip
-        const tooltipTitle = document.getElementById('tooltipTitle');
-        const tooltipBody = document.getElementById('tooltipBody');
-        const tooltipTier = document.getElementById('tooltipTier');
+        const itemTooltip = document.getElementById('itemTooltip'); // NEW
+        const tooltipTitle = document.getElementById('tooltipTitle'); // NEW
+        const tooltipTier = document.getElementById('tooltipTier'); // NEW
+        const tooltipStats = document.getElementById('tooltipStats'); // NEW
 
         // Dialog UI Elements
         const dialogPanel = document.getElementById('dialogPanel');
@@ -1415,7 +1406,7 @@
                  let tx = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
                  let ty = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
                  if (gameGrid[ty][tx].walkable) {
-                    gameGrid[ty][tx] = { ...trapType, explored: false };
+                     gameGrid[ty][tx] = { ...trapType, explored: false };
                  }
             }
 
@@ -1601,11 +1592,30 @@
          * Main draw function
          */
         function drawGame() {
+            // NEW: Resize canvas logic
+            // Make canvas responsive and square
+            const containerWidth = canvasContainer.offsetWidth;
+            const newSize = containerWidth; // Make it fill the container's width
+            
+            if (canvas.width !== newSize) {
+                canvas.width = newSize;
+                canvas.height = newSize;
+            }
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Adjust tile size based on new canvas size
+            const newTileSizeX = canvas.width / MAP_WIDTH;
+            const newTileSizeY = canvas.height / MAP_HEIGHT;
+            // Use the smaller dimension to maintain aspect ratio, but we'll use both
+            // to fill the square space.
+            
+            ctx.font = `${TILE_SIZE}px 'Roboto Mono'`;
+            ctx.textBaseline = 'top';
+            
             // Center camera on player
-            const offsetX = -player.x * TILE_SIZE + canvas.width / 2;
-            const offsetY = -player.y * TILE_SIZE + canvas.height / 2;
+            const offsetX = -player.x * newTileSizeX + canvas.width / 2 - (newTileSizeX / 2);
+            const offsetY = -player.y * newTileSizeY + canvas.height / 2 - (newTileSizeY / 2);
 
             ctx.save();
             ctx.translate(offsetX, offsetY);
@@ -1622,10 +1632,10 @@
                         } else {
                              ctx.fillStyle = tile.color;
                         }
-                        ctx.fillText(tile.char, x * TILE_SIZE, y * TILE_SIZE);
+                        ctx.fillText(tile.char, x * newTileSizeX, y * newTileSizeY);
                     } else if (tile.explored) {
                         ctx.fillStyle = tile.exploredColor;
-                        ctx.fillText(tile.char, x * TILE_SIZE, y * TILE_SIZE);
+                        ctx.fillText(tile.char, x * newTileSizeX, y * newTileSizeY);
                     }
                 }
             }
@@ -1635,7 +1645,7 @@
                 if (fovGrid[item.y][item.x]) {
                     ctx.font = `bold ${TILE_SIZE}px 'Roboto Mono'`;
                     ctx.fillStyle = (Math.floor(Date.now() / 750) % 2 === 0) ? '#f0e68c' : '#7a7a7a'; // Flash
-                    ctx.fillText('*', item.x * TILE_SIZE, item.y * TILE_SIZE);
+                    ctx.fillText('*', item.x * newTileSizeX, item.y * newTileSizeY);
                     ctx.font = `${TILE_SIZE}px 'Roboto Mono'`; // Reset
                 }
             }
@@ -1647,30 +1657,30 @@
                     if (enemy.isBoss) {
                         ctx.font = `bold ${TILE_SIZE*1.2}px 'Roboto Mono'`;
                         ctx.fillStyle = enemy.color;
-                        ctx.fillText(enemy.char, enemy.x * TILE_SIZE, enemy.y * TILE_SIZE);
+                        ctx.fillText(enemy.char, enemy.x * newTileSizeX, enemy.y * newTileSizeY);
                         ctx.font = `${TILE_SIZE}px 'Roboto Mono'`; // Reset
                     } else {
                         ctx.fillStyle = enemy.color;
-                        ctx.fillText(enemy.char, enemy.x * TILE_SIZE, enemy.y * TILE_SIZE);
+                        ctx.fillText(enemy.char, enemy.x * newTileSizeX, enemy.y * newTileSizeY);
                     }
                 }
             }
 
             // Draw the player
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillText('@', player.x * TILE_SIZE, player.y * TILE_SIZE);
+            ctx.fillText('@', player.x * newTileSizeX, player.y * newTileSizeY);
 
             // Draw targeting UI (if active)
             if (targeting.active) {
                 // Draw targeting line
                 ctx.globalAlpha = 0.3;
                 ctx.strokeStyle = '#ff0000';
-                ctx.lineWidth = TILE_SIZE / 4;
+                ctx.lineWidth = newTileSizeX / 4;
                 ctx.beginPath();
                 const line = getLineOfSight(player.x, player.y, targeting.x, targeting.y);
                 line.forEach((point, index) => {
-                    const x = point.x * TILE_SIZE + TILE_SIZE / 2;
-                    const y = point.y * TILE_SIZE + TILE_SIZE / 2;
+                    const x = point.x * newTileSizeX + newTileSizeX / 2;
+                    const y = point.y * newTileSizeY + newTileSizeY / 2;
                     if (index === 0) ctx.moveTo(x, y);
                     else ctx.lineTo(x, y);
                 });
@@ -1680,7 +1690,7 @@
                 // Draw cursor
                 ctx.fillStyle = '#ff0000';
                 ctx.globalAlpha = 0.5;
-                ctx.fillRect(targeting.x * TILE_SIZE, targeting.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                ctx.fillRect(targeting.x * newTileSizeX, targeting.y * newTileSizeY, newTileSizeX, newTileSizeY);
                 ctx.globalAlpha = 1.0;
             }
 
@@ -3242,56 +3252,54 @@
          */
         function updateEquipmentUI() {
             // Weapon
-            const weapon = player.equipment.weapon;
-            if (weapon) {
+            const weaponItem = player.equipment.weapon;
+            if (weaponItem) {
+                const item = weaponItem;
                 let durabilityHTML = '';
                 let isBroken = false;
                 
                 // Only show durability for melee weapons
-                if (weapon.weaponType === 'melee') {
-                    isBroken = weapon.durability <= 0;
+                if (item.weaponType === 'melee') {
+                    isBroken = item.durability <= 0;
                     durabilityHTML = `
                         <span class="item-durability ${isBroken ? 'item-broken' : ''}">
-                            (DUR: ${weapon.durability}/${weapon.stats.Durability})
+                            (DUR: ${item.durability}/${item.stats.Durability})
                         </span>
                     `;
                 }
 
                 weaponSlot.innerHTML = `
                     <span class="${isBroken ? 'item-broken' : ''}">
-                        ${isBroken ? '[BROKEN] ' : ''}${weapon.name}
+                        ${isBroken ? '[BROKEN] ' : ''}${item.name}
                     </span>
                     ${durabilityHTML}
                 `;
                 weaponSlot.classList.add('filled');
-                // Tooltip events
-                weaponSlot.onmouseenter = (e) => showTooltip(weapon, e);
+                // Add tooltip listener
+                weaponSlot.onmouseenter = (e) => showTooltip(item, e);
                 weaponSlot.onmouseleave = hideTooltip;
-                weaponSlot.onmousemove = (e) => moveTooltip(e);
             } else {
                 weaponSlot.innerHTML = '[ Empty ]';
                 weaponSlot.classList.remove('filled');
                 weaponSlot.onmouseenter = null;
                 weaponSlot.onmouseleave = null;
-                weaponSlot.onmousemove = null;
             }
             
             // Armor
-            const armor = player.equipment.armor;
-            if (armor) {
+            const armorItem = player.equipment.armor;
+            if (armorItem) {
+                const item = armorItem;
                 // No durability for armor
-                armorSlot.innerHTML = `<span>${armor.name}</span>`;
+                armorSlot.innerHTML = `<span>${item.name}</span>`;
                 armorSlot.classList.add('filled');
-                // Tooltip events
-                armorSlot.onmouseenter = (e) => showTooltip(armor, e);
+                // Add tooltip listener
+                armorSlot.onmouseenter = (e) => showTooltip(item, e);
                 armorSlot.onmouseleave = hideTooltip;
-                armorSlot.onmousemove = (e) => moveTooltip(e);
             } else {
                 armorSlot.innerHTML = '[ Empty ]';
                 armorSlot.classList.remove('filled');
                 armorSlot.onmouseenter = null;
                 armorSlot.onmouseleave = null;
-                armorSlot.onmousemove = null;
             }
         }
 
@@ -3318,51 +3326,49 @@
                 
                 li.textContent = text;
                 li.onclick = () => handleInventoryClick(index); // Use central handler
-
-                // Tooltip events (NEW)
+                
+                // Add tooltip listeners
                 li.onmouseenter = (e) => showTooltip(item, e);
                 li.onmouseleave = hideTooltip;
-                li.onmousemove = (e) => moveTooltip(e); // Added mousemove
-
+                
                 inventoryList.appendChild(li);
             });
         }
         
-        // --- TOOLTIP FUNCTIONS (NEW) ---
-
+        // --- NEW TOOLTIP FUNCTIONS ---
+        
         /**
          * Shows the item tooltip
-         * @param {object} item - The game item object
-         * @param {MouseEvent} event - The mouse event
          */
         function showTooltip(item, event) {
             if (!item) return;
 
             tooltipTitle.textContent = item.name;
-            tooltipTitle.className = `perk-rarity-${item.tier === 3 ? 'LEGENDARY' : item.tier === 2 ? 'RARE' : 'COMMON'}`; // Color by tier
+            tooltipTier.textContent = `[Tier ${item.tier}]`;
+            tooltipStats.innerHTML = ''; // Clear stats
+
+            // Build stats list
+            for (const stat in item.stats) {
+                const li = document.createElement('li');
+                let statName = stat;
+                // Prettify stat names
+                if (stat === 'PhysicalDR') statName = 'Physical DR';
+                if (stat === 'EnergyDR') statName = 'Energy DR';
+                if (stat === 'RadDR') statName = 'Rad DR';
+                
+                li.innerHTML = `<strong>${statName}:</strong> ${item.stats[stat]}`;
+                tooltipStats.appendChild(li);
+            }
             
-            let statsHTML = '';
-            
-            if (item.type === 'weapon') {
-                statsHTML += `<span class="stat-name">Damage</span> <span class="stat-value">${item.stats.Damage}</span>`;
-                statsHTML += `<span class="stat-name">Type</span> <span class="stat-value">${item.damageType}</span>`;
-                if (item.stats.Durability) {
-                    statsHTML += `<span class="stat-name">Durability</span> <span class="stat-value">${item.durability}/${item.stats.Durability}</span>`;
-                }
-            } else if (item.type === 'armor') {
-                statsHTML += `<span class="stat-name">Physical DR</span> <span class="stat-value">${item.stats.PhysicalDR}</span>`;
-                statsHTML += `<span class="stat-name">Energy DR</span> <span class="stat-value">${item.stats.EnergyDR}</span>`;
-                statsHTML += `<span class="stat-name">Rad DR</span> <span class="stat-value">${item.stats.RadDR}</span>`;
-            } else {
-                statsHTML = `<span class="col-span-2">${item.description || 'A valuable bunker item.'}</span>`;
+            // Special case for melee durability
+            if (item.weaponType === 'melee') {
+                 const li = document.createElement('li');
+                 li.innerHTML = `<strong>Durability:</strong> ${item.durability} / ${item.stats.Durability}`;
+                 tooltipStats.appendChild(li);
             }
 
-            tooltipBody.innerHTML = statsHTML;
-            tooltipTier.textContent = `Tier ${item.tier || '?'}`;
-
-            // Position the tooltip
-            moveTooltip(event); // Use the new move function
             itemTooltip.style.display = 'block';
+            updateTooltipPosition(event); // Position it
         }
 
         /**
@@ -3373,27 +3379,25 @@
         }
 
         /**
-         * Moves the tooltip to follow the mouse
+         * Updates tooltip position to follow the mouse
          */
-        function moveTooltip(event) {
-            if (itemTooltip.style.display !== 'block') return;
-
-            // Position tooltip 10px below and to the right of the cursor
-            let x = event.clientX + 10;
-            let y = event.clientY + 10;
-
+        function updateTooltipPosition(e) {
+            // Position tooltip to the right of the cursor
+            // Add a small 15px offset
+            let x = e.clientX + 15;
+            let y = e.clientY + 15;
+            
             // Prevent tooltip from going off-screen
-            if (x + itemTooltip.offsetWidth + 20 > window.innerWidth) {
-                x = event.clientX - itemTooltip.offsetWidth - 10; // Flip to left
+            if (x + itemTooltip.offsetWidth > window.innerWidth) {
+                x = e.clientX - itemTooltip.offsetWidth - 15;
             }
-            if (y + itemTooltip.offsetHeight + 20 > window.innerHeight) {
-                y = event.clientY - itemTooltip.offsetHeight - 10; // Flip to top
+            if (y + itemTooltip.offsetHeight > window.innerHeight) {
+                y = e.clientY - itemTooltip.offsetHeight - 15;
             }
 
             itemTooltip.style.left = `${x}px`;
             itemTooltip.style.top = `${y}px`;
         }
-
 
         /**
          * Adds a message to the game log
@@ -3422,6 +3426,23 @@
                 logContainer.appendChild(div);
             });
         }
+        
+        /**
+         * Adjusts the canvas size to be square
+         */
+        function resizeCanvas() {
+            const containerWidth = canvasContainer.offsetWidth;
+            const newSize = containerWidth; // Make it fill the container's width
+            
+            if (canvas.width !== newSize) {
+                canvas.width = newSize;
+                canvas.height = newSize;
+            }
+            // Redraw game on resize
+            if (window.init) { // Check if init has run
+                drawGame();
+            }
+        }
 
         // --- INITIALIZATION ---
 
@@ -3429,24 +3450,26 @@
          * Starts the game
          */
         function init() {
-            // Set canvas font properties (must be done *after* loading)
-            ctx.font = `${TILE_SIZE}px 'Roboto Mono'`;
-            ctx.textBaseline = 'top';
-
             // Add input listener
             window.addEventListener('keydown', handleInput);
-
-            // --- REMOVED STARTING ITEMS ---
-            // player.inventory.push(createItemInstance(ITEMS.RUSTY_PIPE));
-            // player.inventory.push(createItemInstance(ITEMS.PIPE_PISTOL));
-            // player.inventory.push(createItemInstance(ITEMS.RAG_TUNIC));
-            // -----------------------------
+            
+            // Add mousemove listener for tooltip
+            window.addEventListener('mousemove', (e) => {
+                if (itemTooltip.style.display === 'block') {
+                    updateTooltipPosition(e);
+                }
+            });
+            
+            // NEW: Add resize listener
+            window.addEventListener('resize', resizeCanvas);
 
             // Create the first level
             createDungeon();
             
             // Draw the initial game state
-            drawGame();
+            resizeCanvas(); // Use this to set initial size and draw
+            
+            window.init = true; // Flag that init has run
         }
 
         // Wait for fonts to load before starting
