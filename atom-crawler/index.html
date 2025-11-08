@@ -1,0 +1,3459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project ATOM-CRAWLER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Retro-futuristic Atompunk theme */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: #1a1a1a; /* Dark, rusty background */
+            color: #b0b0b0; /* Faded text */
+        }
+
+        #gameCanvas {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 20px;
+            line-height: 20px;
+            background-color: #000;
+            color: #b0b0b0;
+            border: 4px solid #4a4a4a;
+            border-image: linear-gradient(to bottom, #7a7a7a, #3a3a3a) 1;
+            box-shadow: 0 0 15px #000 inset;
+            image-rendering: pixelated; /* Crisp text */
+        }
+
+        /* UI Panel Styling */
+        .ui-panel {
+            background-color: #2a2a2a;
+            border: 2px solid #5a5a5a;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 235, 150, 0.05) inset;
+            color: #c0c0c0;
+            /* No overflow-y: auto here, let the grid handle it */
+        }
+
+        .ui-title {
+            color: #f0e68c; /* Pale yellow/gold */
+            border-bottom: 2px solid #6a5a4a;
+            text-shadow: 0 0 5px rgba(240, 230, 140, 0.5);
+        }
+        
+        #inventoryTitle.scrap-mode {
+            color: #ff5050; /* Red when scrapping */
+            text-shadow: 0 0 5px #ff5050;
+        }
+
+        /* Health & Resource Bars */
+        #healthBar {
+            background: linear-gradient(to right, #b90000, #ff5050);
+            transition: width 0.3s ease;
+        }
+        #xpBar {
+            background: linear-gradient(to right, #d4a017, #f0e68c);
+            transition: width 0.3s ease;
+        }
+        #radNeedle {
+            width: 4px;
+            height: 100%;
+            background-color: #f0e68c;
+            position: absolute;
+            bottom: 0;
+            left: 0%;
+            transition: left 0.5s ease;
+            box-shadow: 0 0 5px #f0e68c;
+        }
+
+        /* Game Log */
+        #gameLog {
+            height: 200px; /* Fixed height for the log area */
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            overflow-y: scroll; /* Log is the only thing that scrolls */
+            scrollbar-width: thin;
+            scrollbar-color: #5a5a5a #2a2a2a;
+        }
+        #gameLog div:first-child { color: #ffffff; font-weight: bold; } /* Highlight newest log */
+        #gameLog div.crit-hit { color: #f0e68c; font-weight: bold; text-shadow: 0 0 5px #f0e68c; } /* Crit hit */
+        #gameLog div.perk-log { color: #FFA500; font-weight: bold; text-shadow: 0 0 5px #FFA500; } /* Perk log */
+        #gameLog div:nth-child(n+5) { color: #7a7a7a; } /* Fade old logs */
+
+        /* Stat Allocation */
+        .stat-plus {
+            color: #f0e68c;
+            background-color: #3a3a3a;
+            border: 1px solid #6a5a4a;
+            border-radius: 4px;
+            padding: 0 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+        }
+        .stat-plus:hover {
+            background-color: #4a4a4a;
+            color: #fff;
+        }
+
+        /* Inventory & Equipment */
+        .inventory-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            height: 150px; /* Fixed height */
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #5a5a5a #2a2a2a;
+        }
+        .inventory-item {
+            padding: 4px 8px;
+            border-bottom: 1px solid #4a4a4a;
+            cursor: pointer;
+            color: #b0b0b0;
+            transition: all 0.2s ease;
+            position: relative; /* For tooltip positioning */
+        }
+        .inventory-item:hover {
+            background-color: #3a3a3a;
+            color: #f0e68c;
+        }
+        /* Scrap mode hover */
+        .scrap-mode .inventory-item:hover {
+            background-color: #5a2a2a;
+            color: #ff5050;
+            text-decoration: line-through;
+        }
+        
+        .equipment-slot {
+            padding: 8px;
+            border: 2px dashed #4a4a4a;
+            border-radius: 4px;
+            height: 70px; /* Increased height for durability */
+            color: #7a7a7a;
+            font-style: italic;
+            display: flex;
+            flex-direction: column; /* Center text vertically */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative; /* For tooltip positioning */
+        }
+        .equipment-slot.filled {
+            border-style: solid;
+            border-color: #6a5a4a;
+            color: #f0e68c;
+            font-style: normal;
+            cursor: pointer;
+        }
+        .item-durability {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        .item-broken {
+            color: #ff5050;
+            font-weight: bold;
+            text-shadow: 0 0 5px #ff5050;
+        }
+        
+        /* Perks Panel */
+        .perk-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            height: 120px; /* Fixed height */
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #5a5a5a #2a2a2a;
+        }
+        .perk-item {
+            padding: 4px 8px;
+            border-bottom: 1px solid #4a4a4a;
+            color: #f0e68c;
+            font-weight: bold;
+        }
+        .perk-item-desc {
+            font-size: 0.8rem;
+            color: #b0b0b0;
+            font-weight: normal;
+            padding-left: 1rem;
+        }
+
+
+        /* Flashing Loot Star */
+        @keyframes flash {
+            0%, 100% { color: #f0e68c; }
+            50% { color: #7a7a7a; }
+        }
+        @keyframes flash-red {
+            0%, 100% { color: #ff5050; }
+            50% { color: #7a7a7a; }
+        }
+        .loot-star {
+            animation: flash 1.5s infinite;
+        }
+        .nuka-stim {
+            animation: flash-red 1.2s infinite;
+        }
+
+        /* Game Over Screen */
+        #gameOverScreen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #ff5050;
+            font-size: 3rem;
+            font-weight: bold;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            text-shadow: 0 0 10px #b90000;
+        }
+        #gameOverScreen button {
+            font-size: 1.5rem;
+            color: #f0e68c;
+            background-color: #3a3a3a;
+            border: 2px solid #6a5a4a;
+            border-radius: 8px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        #gameOverScreen button:hover {
+            background-color: #4a4a4a;
+            color: #fff;
+        }
+
+        /* Dialog Modal */
+        #dialogScreen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            color: #c0c0c0;
+            z-index: 100; /* Make sure it's on top */
+        }
+        .dialog-panel {
+            background-color: #2a2a2a;
+            border: 2px solid #5a5a5a;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            padding: 1.5rem;
+            color: #c0c0c0;
+        }
+        
+        .dialog-body {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            white-space: pre-wrap; /* Allow newlines in manual */
+        }
+        
+        .dialog-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+        }
+        
+        .dialog-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background-color: #3a3a3a;
+            border: 1px solid #5a5a5a;
+            color: #c0c0c0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dialog-option:hover {
+            background-color: #4a4a4a;
+            color: #fff;
+        }
+        .dialog-option:disabled {
+            background-color: #3a3a3a;
+            color: #5a5a5a;
+            border-color: #4a4a4a;
+            cursor: not-allowed;
+        }
+        
+        /* AI Dialog */
+        .dialog-panel.ai-dialog {
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 255, 255, 0.2) inset;
+        }
+        .dialog-title.ai-title {
+            color: #00ffff; /* Cyan */
+            border-bottom-color: #008080;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        .dialog-option.ai-option {
+            border-color: #008080;
+            color: #00ffff;
+        }
+        .dialog-option.ai-option:hover {
+            background-color: #4a4a4a;
+            color: #fff;
+        }
+        
+        /* Trader Dialog */
+        .dialog-panel.trader-dialog {
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 255, 0, 0.2) inset;
+        }
+        .dialog-title.trader-title {
+            color: #00ff00; /* Green */
+            border-bottom-color: #008000;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+        .dialog-option.trader-option {
+            border-color: #008000;
+            color: #00ff00;
+        }
+        .dialog-option.trader-option:hover {
+            background-color: #4a4a4a;
+            color: #fff;
+        }
+        .dialog-option.exit {
+            border-color: #6a5a4a;
+            color: #f0e68c;
+        }
+        
+        /* Survivor Dialog (NEW) */
+        .dialog-panel.survivor-dialog {
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(240, 230, 140, 0.2) inset;
+        }
+        .dialog-title.survivor-title {
+            color: #f0e68c; /* Gold */
+            border-bottom-color: #6a5a4a;
+            text-shadow: 0 0 5px rgba(240, 230, 140, 0.5);
+        }
+        .dialog-option.survivor-option {
+            border-color: #6a5a4a;
+            color: #f0e68c;
+        }
+        
+        /* Perk Dialog */
+        .dialog-panel.perk-dialog {
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(240, 230, 140, 0.2) inset;
+        }
+        .dialog-title.perk-title {
+            color: #f0e68c; /* Gold */
+            border-bottom-color: #6a5a4a;
+            text-shadow: 0 0 5px rgba(240, 230, 140, 0.5);
+        }
+        .dialog-option.perk-option {
+            border-color: #6a5a4a;
+            color: #f0e68c;
+        }
+        .dialog-option.perk-option .perk-desc {
+            font-size: 0.85rem;
+            color: #b0b0b0;
+            font-weight: normal;
+            display: block;
+            margin-top: 4px;
+        }
+        .perk-rarity {
+            font-style: italic;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .perk-rarity-COMMON { color: #c0c0c0; }
+        .perk-rarity-RARE { color: #00bfff; } /* Deep Sky Blue */
+        .perk-rarity-LEGENDARY { color: #FFA500; } /* Orange */
+        
+        /* Codex / Manual Dialog */
+        .dialog-panel.codex-dialog {
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(200, 200, 200, 0.2) inset;
+        }
+        .dialog-title.codex-title {
+            color: #e0e0e0; /* Light Gray */
+            border-bottom-color: #7a7a7a;
+            text-shadow: 0 0 5px rgba(220, 220, 220, 0.5);
+        }
+        .dialog-option.codex-option {
+            border-color: #7a7a7a;
+            color: #e0e0e0;
+        }
+        .dialog-option.codex-back {
+            border-color: #6a5a4a;
+            color: #f0e68c;
+        }
+
+        /* --- Item Tooltip (NEW) --- */
+        #itemTooltip {
+            position: absolute;
+            display: none; /* Hidden by default */
+            width: 280px;
+            background-color: #1f1f1f;
+            border: 2px solid #6a5a4a;
+            border-radius: 6px;
+            padding: 12px;
+            color: #c0c0c0;
+            font-size: 0.9rem;
+            z-index: 200; /* On top of everything */
+            pointer-events: none; /* Don't let it block mouse events */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        #tooltipTitle {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #4a4a4a;
+        }
+        #tooltipBody {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+        #tooltipBody span {
+            padding: 2px 0;
+        }
+        #tooltipBody .stat-value {
+            color: #f0e68c;
+            font-weight: bold;
+            text-align: right;
+        }
+        #tooltipBody .stat-name {
+            color: #9a9a9a;
+        }
+        #tooltipTier {
+            font-style: italic;
+            font-size: 0.8rem;
+            text-align: right;
+            color: #9a9a9a;
+            margin-top: 8px;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-300 p-4 md:p-8">
+
+    <div class="max-w-screen-2xl mx-auto"> <!-- Changed to 2xl for more space -->
+        <h1 class="text-4xl font-bold text-center mb-4 text-yellow-300" style="text-shadow: 0 0 10px rgba(240, 230, 140, 0.5);">PROJECT ATOM-CRAWLER</h1>
+        
+        <!-- NEW 4-COLUMN LAYOUT -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+
+            <!-- Game Area (Col 1 & 2) -->
+            <div class="lg:col-span-2 relative">
+                <canvas id="gameCanvas" width="800" height="800"></canvas>
+                
+                <!-- Game Over Screen -->
+                <div id="gameOverScreen">
+                    <div>[ CONNECTION TERMINATED ]</div>
+                    <button onclick="location.reload()">RE-ESTABLISH UPLINK (Restart)</button>
+                </div>
+                
+                <!-- Dialog Screen -->
+                <div id="dialogScreen">
+                    <div id="dialogPanel" class="dialog-panel">
+                        <h2 id="dialogTitle" class="dialog-title">...</h2>
+                        <p id="dialogBody" class="dialog-body">...</p>
+                        <div id="dialogOptions">
+                            <!-- Options added by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UI Column 3: Character Stats -->
+            <div class="lg:col-span-1 flex flex-col gap-4">
+                
+                <!-- Player Stats Panel -->
+                <div class="ui-panel p-4">
+                    <h2 class="ui-title text-xl font-bold mb-3 pb-2">V.T.S. (Vault-Tec System)</h2>
+                    
+                    <div class="mb-3">
+                        <label class="text-lg">HEALTH</label>
+                        <div class="w-full bg-red-900 h-6 rounded border border-red-500">
+                            <div id="healthBar" class="bg-red-500 h-full" style="width: 100%;"></div>
+                        </div>
+                        <div class="text-center text-sm" id="healthText">100 / 100</div>
+                    </div>
+
+                    <!-- XP Bar -->
+                    <div class="mb-3">
+                        <label class="text-lg">EXPERIENCE</label>
+                        <div class="w-full bg-yellow-900 h-6 rounded border border-yellow-500">
+                            <div id="xpBar" class="bg-yellow-500 h-full" style="width: 0%;"></div>
+                        </div>
+                        <div class="text-center text-sm" id="xpText">0 / 30</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-lg">RAD-METER</label>
+                        <div class="w-full bg-gray-700 h-6 rounded border border-gray-500 relative overflow-hidden">
+                            <div class="w-1/3 h-full bg-yellow-700 absolute left-0 top-0"></div>
+                            <div class="w-1/3 h-full bg-red-800 absolute left-1/3 top-0"></div>
+                            <div class="w-1/3 h-full bg-red-900 absolute left-2/3 top-0"></div>
+                            <div id="radNeedle" class="rad-needle"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-lg">
+                        <div>Floor: <span id="floorStat" class="text-white">1</span></div>
+                        <div>Scrap: <span id="scrapStat" class="text-white">0</span></div>
+                        <div>Level: <span id="levelStat" class="text-white">1</span></div>
+                        <div>Stims: <span id="stimStat" class="text-white">2</span></div>
+                        <div class="col-span-2">Ammo: <span id="ammoStat" class="text-white">12/12</span></div>
+                        <div class="col-span-2">Status: <span id="statusStat" class="text-yellow-300">Nominal</span></div>
+                    </div>
+                </div>
+
+                <!-- Player GDO Stats Panel -->
+                <div class="ui-panel p-4">
+                    <h2 class="ui-title text-xl font-bold mb-3 pb-2">S.P.E.C.I.A.L. (GDO)</h2>
+                    <div class="grid grid-cols-2 gap-2 text-lg">
+                        <!-- Stat point allocation buttons -->
+                        <div>VIT: <span id="vitStat" class="text-white">1</span> <button id="vitPlus" class="stat-plus" onclick="spendStatPoint('VIT')">[+]</button></div>
+                        <div>ENG: <span id="engStat" class="text-white">1</span> <button id="engPlus" class="stat-plus" onclick="spendStatPoint('ENG')">[+]</button></div>
+                        <div>STR: <span id="strStat" class="text-white">1</span> <button id="strPlus" class="stat-plus" onclick="spendStatPoint('STR')">[+]</button></div>
+                        <div>AGI: <span id="agiStat" class="text-white">1</span> <button id="agiPlus" class="stat-plus" onclick="spendStatPoint('AGI')">[+]</button></div>
+                        <div>LUCK: <span id="luckStat" class="text-white">1</span> <button id="luckPlus" class="stat-plus" onclick="spendStatPoint('LUCK')">[+]</button></div>
+                    </div>
+                    <div id="statPointText" class="text-yellow-300 mt-2 text-center"></div>
+                </div>
+                
+                <!-- Perks Panel (NEW) -->
+                <div class="ui-panel p-4">
+                    <h2 class="ui-title text-xl font-bold mb-3 pb-2">PERKS</h2>
+                    <ul id="perkList" class="perk-list">
+                        <li class="text-gray-500 italic">...none...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- UI Column 4: Gear & Inventory -->
+            <div class="lg:col-span-1 flex flex-col gap-4">
+                <!-- Equipment Panel -->
+                <div class="ui-panel p-4">
+                    <h2 class="ui-title text-xl font-bold mb-3 pb-2">EQUIPMENT</h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <div class="text-sm text-center mb-1">WEAPON</div>
+                            <div id="weaponSlot" class="equipment-slot" onclick="unequipItem('weapon')">
+                                [ Empty ]
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-center mb-1">ARMOR</div>
+                            <div id="armorSlot" class="equipment-slot" onclick="unequipItem('armor')">
+                                [ Empty ]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Panel -->
+                <div class="ui-panel p-4">
+                    <h2 id="inventoryTitle" class="ui-title text-xl font-bold mb-3 pb-2 transition-all">INVENTORY</h2>
+                    <ul id="inventoryList" class="inventory-list">
+                        <!-- Items will be added here by JS -->
+                        <li class="text-gray-500 italic">...empty...</li>
+                    </ul>
+                </div>
+
+                <!-- Empty space to balance columns, or add more panels later -->
+                <div class="flex-grow"></div>
+            </div>
+
+            <!-- Log Panel (Spans all 4 columns) -->
+            <div class="ui-panel p-4 lg:col-span-4">
+                <h2 class="ui-title text-xl font-bold mb-3 pb-2">SYSTEM LOG</h2>
+                <div class="controls text-center mb-2">
+                    [ CONTROLS: (WASD / Arrows) Move | 'g' (Get) | 'h' (Heal) | 'f' (Fire) | 'x' (Scrap) | 'c' (Codex) | 'Esc' (Cancel) ]
+                </div>
+                <div id="gameLog">
+                    <!-- Log messages will be added here by JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Item Tooltip (NEW) -->
+    <div id="itemTooltip">
+        <h3 id="tooltipTitle" class="text-yellow-300">Item Name</h3>
+        <div id="tooltipBody">
+            <!-- Stats added by JS -->
+        </div>
+        <div id="tooltipTier">Tier 1</div>
+    </div>
+
+    <script>
+        // --- GAME SETUP ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const dialogScreen = document.getElementById('dialogScreen');
+
+        // Game Grid settings
+        const TILE_SIZE = 20;
+        const MAP_WIDTH = 40;
+        const MAP_HEIGHT = 40;
+
+        // Tile definitions
+        const TILES = {
+            WALL: { char: '#', color: '#5a5a5a', exploredColor: '#3a3a3a', walkable: false, transparent: false },
+            FLOOR: { char: '.', color: '#7a7a7a', exploredColor: '#2a2a2a', walkable: true, transparent: true },
+            STAIRS_DOWN: { char: '>', color: '#f0e68c', exploredColor: '#a0904c', walkable: true, transparent: true },
+            SCRAP: { char: '$', color: '#f0e68c', exploredColor: '#a0904c', walkable: true, transparent: true },
+            AMMO: { char: 'a', color: '#00bfff', exploredColor: '#007fff', walkable: true, transparent: true },
+            STIM: { char: '+', color: '#ff5050', exploredColor: '#b90000', walkable: true, transparent: true },
+            TRAP_WIRING: { char: '~', color: '#00FFFF', exploredColor: '#008080', walkable: true, transparent: true, damage: 5, type: 'energy' },
+            TRAP_ACID: { char: '=', color: '#00ff00', exploredColor: '#008000', walkable: true, transparent: true, damage: 3, type: 'acid' },
+            TRAP_RADS: { char: '%', color: '#ADFF2F', exploredColor: '#556B2F', walkable: true, transparent: true, damage: 10, type: 'radiation' }, // Green-Yellow
+            NPC_AI: { char: '?', color: '#00FFFF', exploredColor: '#008080', walkable: true, transparent: true },
+            NPC_TRADER: { char: 'T', color: '#00ff00', exploredColor: '#008000', walkable: true, transparent: true },
+            NPC_SURVIVOR: { char: 'S', color: '#f0e68c', exploredColor: '#a0904c', walkable: true, transparent: true } // New
+        };
+
+        // Game state variables
+        let gameGrid = []; // 2D array for the map
+        let fovGrid = []; // 2D array for field of view
+        let enemies = []; // Array of enemy objects
+        let groundItems = []; // Items on the floor
+        let player = { 
+            x: 0, 
+            y: 0, 
+            health: 100, 
+            maxHealth: 100, 
+            baseMaxHealth: 100, // For buffs
+            level: 1,
+            xp: 0,
+            xpToNextLevel: 30,
+            statPoints: 0,
+            perkPoints: 0,
+            perks: [], // List of acquired perk IDs
+            nervesOfSteelUsedThisFloor: false, // For Legendary Perk
+            baseDamage: 5,
+            basePhysicalDR: 0,
+            baseEnergyDR: 0,
+            baseRadDR: 0,
+            totalDamage: 5,
+            totalPhysicalDR: 0,
+            totalEnergyDR: 0,
+            totalRadDR: 0,
+            inventory: [],
+            equipment: {
+                weapon: null,
+                armor: null
+            }
+        };
+        let gameState = {
+            floor: 1,
+            sector: 1,
+            scrap: 0,
+            radiation: 0, // 0-100 scale
+            ammo: 12,
+            maxAmmo: 12,
+            stims: 2, // Start with 2 stims
+            stats: { VIT: 1, ENG: 1, STR: 1, AGI: 1, LUCK: 1 },
+            gameOver: false,
+            mode: 'explore', // 'explore', 'fire', 'scrap', 'dialog'
+            bossAlive: false,
+            codexPage: 'main', // For new manual
+            traderStock: {}, // For new trader
+            survivorQuestActive: false // For new survivor
+        };
+        let targeting = {
+            x: 0,
+            y: 0,
+            active: false
+        };
+        let gameLog = [];
+
+        // UI Elements
+        const healthBar = document.getElementById('healthBar');
+        const healthText = document.getElementById('healthText');
+        const xpBar = document.getElementById('xpBar');
+        const xpText = document.getElementById('xpText');
+        const levelStat = document.getElementById('levelStat');
+        const radNeedle = document.getElementById('radNeedle');
+        const floorStat = document.getElementById('floorStat');
+        const scrapStat = document.getElementById('scrapStat');
+        const ammoStat = document.getElementById('ammoStat');
+        const stimStat = document.getElementById('stimStat'); // New
+        const statusStat = document.getElementById('statusStat');
+        const vitStat = document.getElementById('vitStat');
+        const engStat = document.getElementById('engStat');
+        const strStat = document.getElementById('strStat');
+        const agiStat = document.getElementById('agiStat');
+        const luckStat = document.getElementById('luckStat');
+        const statPointText = document.getElementById('statPointText');
+        const logContainer = document.getElementById('gameLog');
+        const weaponSlot = document.getElementById('weaponSlot');
+        const armorSlot = document.getElementById('armorSlot');
+        const inventoryList = document.getElementById('inventoryList');
+        const inventoryTitle = document.getElementById('inventoryTitle');
+        const perkList = document.getElementById('perkList');
+        const itemTooltip = document.getElementById('itemTooltip'); // New Tooltip
+        const tooltipTitle = document.getElementById('tooltipTitle');
+        const tooltipBody = document.getElementById('tooltipBody');
+        const tooltipTier = document.getElementById('tooltipTier');
+
+        // Dialog UI Elements
+        const dialogPanel = document.getElementById('dialogPanel');
+        const dialogTitle = document.getElementById('dialogTitle');
+        const dialogBody = document.getElementById('dialogBody');
+        const dialogOptions = document.getElementById('dialogOptions');
+
+        // --- ITEM & LOOT DEFINITIONS (GDO) ---
+        
+        // Base item definitions
+        const ITEMS = {
+            // Tier 1: "Rust" (Floors 1-10)
+            "RUSTY_PIPE": { 
+                name: "Rusty Pipe", 
+                type: 'weapon', 
+                slot: 'weapon',
+                weaponType: 'melee', 
+                damageType: 'physical',
+                tier: 1,
+                stats: { Damage: 8, Speed: 30, Accuracy: 100, Durability: 30 },
+            },
+            "PIPE_PISTOL": { 
+                name: "Makeshift 'Pipe' Pistol", 
+                type: 'weapon', 
+                slot: 'weapon',
+                weaponType: 'ranged', 
+                damageType: 'physical',
+                tier: 1,
+                stats: { Damage: 12, Speed: 25, Accuracy: 30 },
+            },
+            "RAG_TUNIC": { 
+                name: "Rag Tunic", 
+                type: 'armor', 
+                slot: 'armor',
+                tier: 1,
+                stats: { PhysicalDR: 4, EnergyDR: 1, RadDR: 2, Weight: 10 },
+            },
+            "SECURITY_VEST": {
+                name: "Worn Security Vest",
+                type: 'armor',
+                slot: 'armor',
+                tier: 1, // High-tier T1
+                stats: { PhysicalDR: 15, EnergyDR: 10, RadDR: 5, Weight: 35 },
+            },
+            
+            // Tier 2: "Chrome" (Floors 11-20)
+            "SHOCK_BATON": {
+                name: "'Protect-o' Shock Baton",
+                type: 'weapon',
+                slot: 'weapon',
+                weaponType: 'melee',
+                damageType: 'energy',
+                tier: 2,
+                stats: { Damage: 20, Speed: 60, Accuracy: 100, Durability: 50 },
+            },
+            "LASER_PISTOL": {
+                name: "'Model-B' Laser Pistol",
+                type: 'weapon',
+                slot: 'weapon',
+                weaponType: 'ranged',
+                damageType: 'energy',
+                tier: 2,
+                stats: { Damage: 25, Speed: 50, Accuracy: 75 },
+            },
+            "LAB_COAT": {
+                name: "Reinforced Lab Coat",
+                type: 'armor',
+                slot: 'armor',
+                tier: 2,
+                stats: { PhysicalDR: 10, EnergyDR: 20, RadDR: 25, Weight: 15 },
+            },
+            "BULWARK_ARMOR": {
+                name: "'Bulwark' Riot Armor",
+                type: 'armor',
+                slot: 'armor',
+                tier: 2, // High-tier T2
+                stats: { PhysicalDR: 40, EnergyDR: 25, RadDR: 15, Weight: 60 },
+            },
+            
+            // Tier 3: "Atompunk" (Floors 21-30)
+            "NUKE_SHOTGUN": {
+                name: "'Nuke-Leaver' Combat Shotgun",
+                type: 'weapon',
+                slot: 'weapon',
+                weaponType: 'ranged',
+                damageType: 'physical',
+                tier: 3,
+                stats: { Damage: 55, Speed: 15, Accuracy: 20 },
+            },
+            "BLASTO_RIFLE": {
+                name: "'Blasto-Ray' Rifle",
+                type: 'weapon',
+                slot: 'weapon',
+                weaponType: 'ranged',
+                damageType: 'energy',
+                tier: 3,
+                stats: { Damage: 45, Speed: 40, Accuracy: 85 },
+            },
+            "HAZMAT_SUIT": {
+                name: "Hazmat Suit (Pristine)",
+                type: 'armor',
+                slot: 'armor',
+                tier: 3,
+                stats: { PhysicalDR: 5, EnergyDR: 15, RadDR: 70, Weight: 20 },
+            },
+            "POWER_FRAME": {
+                name: "'Pre-War' Power Frame",
+                type: 'armor',
+                slot: 'armor',
+                tier: 3, // High-tier T3
+                stats: { PhysicalDR: 70, EnergyDR: 60, RadDR: 50, Weight: 90 },
+            }
+        };
+        
+        /**
+         * Creates a fresh instance of an item, with full durability if applicable
+         */
+        function createItemInstance(itemTemplate) {
+            // Deep copy the template
+            let instance = JSON.parse(JSON.stringify(itemTemplate));
+            
+            if (itemTemplate.stats.Durability) {
+                instance.durability = itemTemplate.stats.Durability;
+            }
+            
+            return instance;
+        }
+
+        // Loot Tables by Tier
+        const LOOT_TABLE_TIER_1 = [
+            ITEMS.RUSTY_PIPE,
+            ITEMS.PIPE_PISTOL,
+            ITEMS.RAG_TUNIC
+        ];
+        
+        const LOOT_TABLE_TIER_2 = [
+            ITEMS.SHOCK_BATON,
+            ITEMS.LASER_PISTOL,
+            ITEMS.LAB_COAT
+        ];
+        
+        const LOOT_TABLE_TIER_3 = [
+            ITEMS.NUKE_SHOTGUN,
+            ITEMS.BLASTO_RIFLE,
+            ITEMS.HAZMAT_SUIT
+        ];
+
+
+        // --- ENEMY DEFINITIONS (GDO) ---
+        
+        // Base enemy definitions
+        const ENEMIES = {
+            // Sector 1: "The Atrium" (Floors 1-10)
+            "RAD_ROACH": {
+                name: 'Rad-Roach',
+                char: 'R',
+                color: '#ff0000',
+                health: 10,
+                maxHealth: 10,
+                damage: 2,
+                damageType: 'physical',
+                xpValue: 10,
+                baseLootChance: 0.25 
+            },
+            "JANITOR_BOT": {
+                name: 'Janitor-Bot',
+                char: 'J',
+                color: '#00FFFF', // Cyan
+                health: 25,
+                maxHealth: 25,
+                damage: 5,
+                damageType: 'physical',
+                xpValue: 25,
+                baseLootChance: 0.1 
+            },
+            "SCRUB_BOT": { // Boss spawn
+                name: 'Scrub-Bot',
+                char: 'r',
+                color: '#ff9900', // Orange
+                health: 5,
+                maxHealth: 5,
+                damage: 1,
+                damageType: 'physical',
+                xpValue: 1,
+                baseLootChance: 0
+            },
+            "BOSS_HEAD_JANITOR": {
+                name: 'The Head Janitor',
+                char: 'H',
+                color: '#FFA500', // Bright Orange
+                health: 100,
+                maxHealth: 100,
+                damage: 8,
+                damageType: 'physical',
+                xpValue: 150,
+                baseLootChance: 1.0, 
+                turnsToSpawnMinion: 5,
+                turnCount: 0,
+                isBoss: true
+            },
+            
+            // Sector 2: "Bio-Labs" (Floors 11-20)
+            "GOO_MUTANT": {
+                name: 'Goo-Mutant',
+                char: 'G',
+                color: '#00ff00', // Bright Green
+                health: 30,
+                maxHealth: 30,
+                damage: 6,
+                damageType: 'acid',
+                xpValue: 35,
+                baseLootChance: 0.2
+            },
+            "GOO_MINION": { // Giga-Goo spawn
+                name: 'Goo-Minion',
+                char: 'g',
+                color: '#90ee90', // Light Green
+                health: 10,
+                maxHealth: 10,
+                damage: 3,
+                damageType: 'acid',
+                xpValue: 5,
+                baseLootChance: 0
+            },
+            "FUNGAL_CRAWLER": {
+                name: 'Fungal-Crawler',
+                char: 'F',
+                color: '#9932CC', // Dark Orchid (purple)
+                health: 20,
+                maxHealth: 20,
+                damage: 4,
+                damageType: 'physical',
+                xpValue: 30,
+                baseLootChance: 0.15
+            },
+            "BOSS_GIGA_GOO": {
+                name: 'Giga-Goo',
+                char: 'G',
+                color: '#008000', // Dark Green
+                health: 200,
+                maxHealth: 200,
+                damage: 10,
+                damageType: 'acid',
+                xpValue: 300,
+                baseLootChance: 1.0,
+                turnsToSpawnMinion: 4,
+                turnCount: 0,
+                isBoss: true
+            },
+            
+            // Sector 3: "The Reactor" (Floors 21-30)
+            "IRRADIATED_GHOUL": {
+                name: 'Irradiated Ghoul',
+                char: 'i',
+                color: '#ADFF2F', // Green-Yellow
+                health: 40,
+                maxHealth: 40,
+                damage: 8,
+                damageType: 'radiation', // New damage type
+                xpValue: 50,
+                baseLootChance: 0.25
+            },
+            "CHROME_GUARD": { // Future
+                name: 'Chrome-Guard',
+                char: 'C',
+                color: '#C0C0C0', // Silver
+                health: 60,
+                maxHealth: 60,
+                damage: 12,
+                damageType: 'energy',
+                xpValue: 75,
+                baseLootChance: 0.2
+            }
+        };
+
+        // Enemy Tables by Sector
+        const ENEMY_TABLE_SECTOR_1 = [
+            ENEMIES.RAD_ROACH,
+            ENEMIES.JANITOR_BOT
+        ];
+        
+        const ENEMY_TABLE_SECTOR_2 = [
+            ENEMIES.GOO_MUTANT,
+            ENEMIES.FUNGAL_CRAWLER
+        ];
+        
+        const ENEMY_TABLE_SECTOR_3 = [
+            ENEMIES.IRRADIATED_GHOUL,
+            // ENEMIES.CHROME_GUARD // Add when ready
+        ];
+
+        
+        // --- PERK DEFINITIONS (GDO) ---
+        const PERKS = {
+            COMMON: [
+                {
+                    id: "JUNKER",
+                    name: "Junker",
+                    rarity: "COMMON",
+                    description: "10% chance to find bonus scrap when looting."
+                },
+                {
+                    id: "TOUGHNESS",
+                    name: "Toughness",
+                    rarity: "COMMON",
+                    description: "Permanently gain +10 Max Health."
+                },
+                {
+                    id: "HEAVY_HAND",
+                    name: "Heavy Hand",
+                    rarity: "COMMON",
+                    description: "+3 flat Melee damage."
+                },
+                {
+                    id: "GREASEMONKEY",
+                    name: "Greasemonkey",
+                    rarity: "COMMON",
+                    description: "Your melee weapons degrade 50% slower."
+                }
+            ],
+            RARE: [
+                {
+                    id: "RAD_RESISTANT",
+                    name: "Rad Resistant",
+                    rarity: "RARE",
+                    description: "Permanently gain +15 Rad DR."
+                },
+                {
+                    id: "LIGHT_STEPPER",
+                    name: "Light Stepper",
+                    rarity: "RARE",
+                    description: "You no longer set off floor-based traps (wiring, acid, rads)."
+                },
+                {
+                    id: "RAD_CONDITIONING",
+                    name: "Rad Conditioning",
+                    rarity: "RARE",
+                    description: "Gain +1% damage for every 10 points of Radiation (Max +10%)."
+                }
+            ],
+            LEGENDARY: [
+                {
+                    id: "NERVES_OF_STEEL",
+                    name: "Nerves of Steel",
+                    rarity: "LEGENDARY",
+                    description: "Fatal damage will instead heal you to 50% HP. (Once per floor)"
+                },
+                {
+                    id: "PRE_WAR_SCHEMATIC",
+                    name: "Pre-War Schematic",
+                    rarity: "LEGENDARY",
+                    description: "Loot you find is one Tier higher. (T2 in T1, T3 in T2)."
+                },
+                {
+                    id: "BULLET_STORM",
+                    name: "Bullet Storm",
+                    rarity: "LEGENDARY",
+                    description: "Killing an enemy with a ranged weapon refunds 1 Ammo."
+                }
+            ]
+        };
+        
+        // --- CODEX / MANUAL CONTENT (NEW) ---
+        const CODEX = {
+            'main': {
+                title: 'ATOM-CRAWLER MANUAL',
+                body: "Welcome, Crawler. This manual contains vital information for your survival in the bunker.\n\nSelect a topic to review.",
+                options: [
+                    { text: "S.P.E.C.I.A.L. Stats", page: 'stats_main' },
+                    { text: "Survival Systems", page: 'survival_main' },
+                    { text: "[Exit] Close Manual", page: 'exit' }
+                ]
+            },
+            // Stats
+            'stats_main': {
+                title: 'MANUAL > S.P.E.C.I.A.L.',
+                body: "Your core attributes determine your effectiveness. You gain 1 Stat Point per level.",
+                options: [
+                    { text: "VITALITY (VIT)", page: 'stat_vit' },
+                    { text: "ENGINEERING (ENG)", page: 'stat_eng' },
+                    { text: "STRENGTH (STR)", page: 'stat_str' },
+                    { text: "AGILITY (AGI)", page: 'stat_agi' },
+                    { text: "LUCK (LUCK)", page: 'stat_luck' },
+                    { text: "[Back] To Main Menu", page: 'main' }
+                ]
+            },
+            'stat_vit': {
+                title: 'STAT > VITALITY',
+                body: "VITALITY is your measure of toughness.\n\n- Each point of VIT increases your Maximum Health by +20.",
+                options: [ { text: "[Back] To S.P.E.C.I.A.L.", page: 'stats_main' } ]
+            },
+            'stat_eng': {
+                title: 'STAT > ENGINEERING',
+                body: "ENGINEERING reflects your technical skill.\n\n- Increases your Energy Damage Resistance (E.DR).\n- Increases your Radiation Resistance (R.DR).",
+                options: [ { text: "[Back] To S.P.E.C.I.A.L.", page: 'stats_main' } ]
+            },
+            'stat_str': {
+                title: 'STAT > STRENGTH',
+                body: "STRENGTH is your raw physical power.\n\n- Increases the damage of all Melee weapons (including fists).",
+                options: [ { text: "[Back] To S.P.E.C.I.A.L.", page: 'stats_main' } ]
+            },
+            'stat_agi': {
+                title: 'STAT > AGILITY',
+                body: "AGILITY is your speed and reflexes.\n\n- Increases the damage of all Ranged weapons.",
+                options: [ { text: "[Back] To S.P.E.C.I.A.L.", page: 'stats_main' } ]
+            },
+            'stat_luck': {
+                title: 'STAT > LUCK',
+                body: "LUCK governs fortune and probability.\n\n- Increases your Critical Hit chance with all attacks.\n- Increases the chance of enemies dropping loot.",
+                options: [ { text: "[Back] To S.P.E.C.I.A.L.", page: 'stats_main' } ]
+            },
+            // Survival
+            'survival_main': {
+                title: 'MANUAL > SURVIVAL',
+                body: "Staying alive is more than just fighting. You must manage your resources and health.",
+                options: [
+                    { text: "Radiation", page: 'survival_rad' },
+                    { text: "Healing (Nuka-Stims)", page: 'survival_stim' },
+                    { text: "Scrap & Repair", page: 'survival_scrap' },
+                    { text: "NPCs & Vendors", page: 'survival_vendor' },
+                    { text: "[Back] To Main Menu", page: 'main' }
+                ]
+            },
+            'survival_rad': {
+                title: 'SURVIVAL > RADIATION',
+                body: "The bunker is flooded with radiation. Manage it or die.\n\n- The RAD-METER shows your current Radiation (0-100).\n- As radiation increases, your Maximum Health is reduced!\n- Your Rad DR stat (from ENG and Armor) reduces the amount of ambient radiation you absorb each turn.\n- Radiation Hotspots (%) and Irradiated Ghouls (i) deal direct radiation damage.",
+                options: [ { text: "[Back] To Survival", page: 'survival_main' } ]
+            },
+            'survival_stim': {
+                title: 'SURVIVAL > NUKA-STIMS',
+                body: "Nuka-Stims (+) are your primary source of healing.\n\n- Press 'h' to use a Stim.\n- Heals 40% of your Maximum Health.\n- Using a Stim consumes your turn.",
+                options: [ { text: "[Back] To Survival", page: 'survival_main' } ]
+            },
+            'survival_scrap': {
+                title: 'SURVIVAL > SCRAP & REPAIR',
+                body: "Scrap ($) is the bunker's currency.\n\n- Press 'x' to enter Scrap Mode, then click inventory items to destroy them for Scrap.\n- Melee weapons have Durability. They break at 0.\n- Rogue AI (?) terminals can repair your melee weapon in exchange for Scrap.",
+                options: [ { text: "[Back] To Survival", page: 'survival_main' } ]
+            },
+            'survival_vendor': {
+                title: 'SURVIVAL > NPCS & VENDORS',
+                body: "You are not entirely alone. Other... entities... still function in the bunker.\n\n- Rogue AI (?): Sells services like map data, temporary buffs, and melee weapon repair.\n\n- Wandering Trader (T): Sells goods like Nuka-Stims, Ammo, and random gear. Their gear quality improves in deeper sectors.\n\n- Cowering Survivor (S): May offer a reward if you can clear the floor of all hostiles.",
+                options: [ { text: "[Back] To Survival", page: 'survival_main' } ]
+            }
+        };
+
+        // --- MAP GENERATION ---
+
+        /**
+         * Initializes and generates a new map
+         */
+        function createDungeon() {
+            // Reset game state for new floor
+            gameGrid = [];
+            fovGrid = [];
+            enemies = [];
+            groundItems = [];
+            setGameMode('explore'); // Reset mode
+            targeting.active = false;
+            gameState.bossAlive = false;
+            gameState.survivorQuestActive = false; // Reset quest
+            player.nervesOfSteelUsedThisFloor = false; // Reset perk
+
+            // Reset floor-specific buffs
+            player.baseMaxHealth = 80 + (gameState.stats.VIT * 20); // Reset base health
+            // Re-apply permanent buffs
+            if (player.perks.includes("TOUGHNESS")) {
+                player.baseMaxHealth += 10;
+            }
+            
+            // Fill map with solid walls
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                gameGrid[y] = [];
+                fovGrid[y] = [];
+                for (let x = 0; x < MAP_WIDTH; x++) {
+                    gameGrid[y][x] = { ...TILES.WALL, explored: false };
+                    fovGrid[y][x] = false;
+                }
+            }
+            
+            // --- BOSS FLOOR LOGIC (GDO) ---
+            if (gameState.floor === 10) {
+                createBossFloor(ENEMIES.BOSS_HEAD_JANITOR, ITEMS.SECURITY_VEST, TILES.FLOOR);
+            } 
+            else if (gameState.floor === 20) {
+                createBossFloor(ENEMIES.BOSS_GIGA_GOO, ITEMS.BULWARK_ARMOR, TILES.TRAP_ACID);
+            } 
+            else if (gameState.floor === 30) {
+                // TODO: Add 3rd Boss
+                createDungeonStandard();
+            }
+            else {
+            // --- STANDARD FLOOR LOGIC ---
+                createDungeonStandard();
+            }
+
+            // Initial FOV calculation and UI update
+            updatePlayerStats();
+            calculateFOV();
+            updateUI();
+            
+            let sectorName = getSectorName();
+            addLog(`Welcome to Floor ${gameState.floor}. Entering ${sectorName}. ${gameState.bossAlive ? '!! BOSS DETECTED !!' : ''}`);
+        }
+        
+        /**
+         * Generates a standard (non-boss) floor
+         */
+        function createDungeonStandard() {
+            let rooms = [];
+            const maxRooms = 15;
+            const minRoomSize = 4;
+            const maxRoomSize = 8;
+
+            for (let i = 0; i < maxRooms; i++) {
+                let w = Math.floor(Math.random() * (maxRoomSize - minRoomSize)) + minRoomSize;
+                let h = Math.floor(Math.random() * (maxRoomSize - minRoomSize)) + minRoomSize;
+                let x = Math.floor(Math.random() * (MAP_WIDTH - w - 2)) + 1;
+                let y = Math.floor(Math.random() * (MAP_HEIGHT - h - 2)) + 1;
+
+                // Create a new room
+                const newRoom = { x1: x, y1: y, x2: x + w, y2: y + h };
+
+                // Check for overlaps
+                let failed = false;
+                for (let otherRoom of rooms) {
+                    if (newRoom.x1 <= otherRoom.x2 && newRoom.x2 >= otherRoom.x1 &&
+                        newRoom.y1 <= otherRoom.y2 && newRoom.y2 >= otherRoom.y1) {
+                        failed = true;
+                        break;
+                    }
+                }
+
+                if (!failed) {
+                    // No overlaps, carve the room
+                    createRoom(newRoom, TILES.FLOOR);
+                    
+                    // Place player in the center of the first room
+                    if (rooms.length === 0) {
+                        player.x = Math.floor((newRoom.x1 + newRoom.x2) / 2);
+                        player.y = Math.floor((newRoom.y1 + newRoom.y2) / 2);
+                    } else {
+                        // Connect to the previous room
+                        let prevRoom = rooms[rooms.length - 1];
+                        let newX = Math.floor((newRoom.x1 + newRoom.x2) / 2);
+                        let newY = Math.floor((newRoom.y1 + newRoom.y2) / 2);
+                        let prevX = Math.floor((prevRoom.x1 + prevRoom.x2) / 2);
+                        let prevY = Math.floor((prevRoom.y1 + prevRoom.y2) / 2);
+
+                        // Carve tunnels
+                        if (Math.random() > 0.5) {
+                            createHTunnel(prevX, newX, prevY);
+                            createVTunnel(prevY, newY, newX);
+                        } else {
+                            createVTunnel(prevY, newY, prevX);
+                            createHTunnel(prevX, newX, newY);
+                        }
+                    }
+
+                    // Add entities to the room (but not the first room)
+                    if (rooms.length > 0) {
+                        populateRoom(newRoom);
+                    }
+
+                    rooms.push(newRoom);
+                }
+            }
+
+            // Place stairs in the last room
+            let lastRoom = rooms[rooms.length - 1];
+            let stairX = Math.floor((lastRoom.x1 + lastRoom.x2) / 2);
+            let stairY = Math.floor((lastRoom.y1 + lastRoom.y2) / 2);
+            gameGrid[stairY][stairX] = { ...TILES.STAIRS_DOWN, explored: false };
+        }
+        
+        /**
+         * Returns the name of the current sector based on floor
+         */
+        function getSectorName() {
+            switch(gameState.sector) {
+                case 3: return '"The Reactor"';
+                case 2: return '"Bio-Labs"';
+                case 1: 
+                default:
+                    return '"The Atrium"';
+            }
+        }
+
+        /**
+         * Creates the special boss arena
+         * @param {object} bossTemplate - The template object for the boss
+         * @param {object} bossLoot - The guaranteed item drop
+         * @param {object} floorTile - The tile to use for the arena floor
+         */
+        function createBossFloor(bossTemplate, bossLoot, floorTile) {
+            // Create a large, open arena
+            const arena = { x1: 5, y1: 5, x2: MAP_WIDTH - 5, y2: MAP_HEIGHT - 5 };
+            createRoom(arena, floorTile);
+
+            // Player starts at the entrance
+            player.x = Math.floor(MAP_WIDTH / 2);
+            player.y = MAP_HEIGHT - 7;
+            
+            // Spawn the Boss
+            const bossX = Math.floor(MAP_WIDTH / 2);
+            const bossY = 10;
+            enemies.push({
+                ...bossTemplate,
+                x: bossX,
+                y: bossY,
+                health: bossTemplate.health,
+                maxHealth: bossTemplate.maxHealth,
+                turnCount: 0, // Initialize turn counter
+                guaranteedLoot: bossLoot // Store the loot to drop
+            });
+            gameState.bossAlive = true;
+        }
+
+        /**
+         * Carves a rectangular room
+         */
+        function createRoom(room, tile) {
+            for (let y = room.y1; y < room.y2; y++) {
+                for (let x = room.x1; x < room.x2; x++) {
+                    gameGrid[y][x] = { ...tile, explored: false };
+                }
+            }
+        }
+
+        /**
+         * Carves a horizontal tunnel
+         */
+        function createHTunnel(x1, x2, y) {
+            for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
+                gameGrid[y][x] = { ...TILES.FLOOR, explored: false };
+            }
+        }
+
+        /**
+         * Carves a vertical tunnel
+         */
+        function createVTunnel(y1, y2, x) {
+            for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
+                gameGrid[y][x] = { ...TILES.FLOOR, explored: false };
+            }
+        }
+
+        /**
+         * Adds enemies, items, and traps to a room based on Sector
+         */
+        function populateRoom(room) {
+            let maxEnemies, maxItems, enemyTable, trapChance, trapType;
+            let aiChance, traderChance, stimChance, survivorChance;
+
+            switch(gameState.sector) {
+                case 3: // "The Reactor"
+                    maxEnemies = 2; // Fewer, but tougher
+                    maxItems = 1;
+                    enemyTable = ENEMY_TABLE_SECTOR_3;
+                    trapChance = 0.25; // 25%
+                    trapType = TILES.TRAP_RADS;
+                    aiChance = 0.10; // 10%
+                    traderChance = 0.07; // 7%
+                    stimChance = 0.14; // 14%
+                    survivorChance = 0.05; // 5%
+                    break;
+                case 2: // "Bio-Labs"
+                    maxEnemies = 3;
+                    maxItems = 1;
+                    enemyTable = ENEMY_TABLE_SECTOR_2;
+                    trapChance = 0.20; // 20%
+                    trapType = TILES.TRAP_ACID;
+                    aiChance = 0.10; // 10%
+                    traderChance = 0.07; // 7%
+                    stimChance = 0.14; // 14%
+                    survivorChance = 0.05; // 5%
+                    break;
+                case 1: // "The Atrium"
+                default:
+                    maxEnemies = 2;
+                    maxItems = 1;
+                    enemyTable = ENEMY_TABLE_SECTOR_1;
+                    trapChance = 0.15; // 15%
+                    trapType = TILES.TRAP_WIRING;
+                    aiChance = 0.10; // 10%
+                    traderChance = 0.07; // 7%
+                    stimChance = 0.14; // 14%
+                    survivorChance = 0.05; // 5%
+                    break;
+            }
+
+            // Spawn enemies
+            let numEnemies = Math.floor(Math.random() * (maxEnemies + 1));
+            for (let i = 0; i < numEnemies; i++) {
+                let ex = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
+                let ey = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
+                
+                let template = {...enemyTable[Math.floor(Math.random() * enemyTable.length)]};
+                
+                if (gameGrid[ey][ex].walkable && !getEnemyAt(ex, ey)) {
+                    enemies.push({
+                        ...template,
+                        x: ex, 
+                        y: ey, 
+                        health: template.health,
+                        maxHealth: template.maxHealth
+                    });
+                }
+            }
+
+            // Spawn traps
+            if (Math.random() < trapChance) {
+                 let tx = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
+                 let ty = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
+                 if (gameGrid[ty][tx].walkable) {
+                    gameGrid[ty][tx] = { ...trapType, explored: false };
+                 }
+            }
+
+            // Spawn items (Scrap)
+            let numItems = Math.floor(Math.random() * (maxItems + 1));
+            for (let i = 0; i < numItems; i++) {
+                let ix = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
+                let iy = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
+                
+                if (gameGrid[iy][ix].walkable) {
+                    gameGrid[iy][ix] = { ...TILES.SCRAP, explored: false };
+                }
+            }
+            
+            // Spawn Ammo
+            if (Math.random() < 0.1) { // 10% chance per room
+                let ax = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
+                let ay = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
+                
+                if (gameGrid[ay][ax].walkable && gameGrid[ay][ax].char === TILES.FLOOR.char) {
+                    gameGrid[ay][ax] = { ...TILES.AMMO, explored: false };
+                }
+            }
+            
+            // Spawn Stims
+            if (Math.random() < stimChance) { // 14%
+                let sx = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
+                let sy = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
+                
+                if (gameGrid[sy][sx].walkable && gameGrid[sy][sx].char === TILES.FLOOR.char) {
+                    gameGrid[sy][sx] = { ...TILES.STIM, explored: false };
+                }
+            }
+            
+            // Spawn NPC (Rogue AI)
+            if (Math.random() < aiChance) { // 10% chance
+                let nx = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
+                let ny = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
+                
+                if (gameGrid[ny][nx].walkable && gameGrid[ny][nx].char === TILES.FLOOR.char) {
+                    gameGrid[ny][nx] = { ...TILES.NPC_AI, explored: false };
+                }
+            }
+            
+            // Spawn NPC (Trader)
+            if (Math.random() < traderChance) { // 7% chance
+                let nx = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
+                let ny = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
+                
+                if (gameGrid[ny][nx].walkable && gameGrid[ny][nx].char === TILES.FLOOR.char) {
+                    gameGrid[ny][nx] = { ...TILES.NPC_TRADER, explored: false };
+                }
+            }
+            
+            // Spawn NPC (Survivor) - (NEW)
+            if (Math.random() < survivorChance) { // 5% chance
+                let nx = Math.floor(Math.random() * (room.x2 - room.x1)) + room.x1;
+                let ny = Math.floor(Math.random() * (room.y2 - room.y1)) + room.y1;
+                
+                if (gameGrid[ny][nx].walkable && gameGrid[ny][nx].char === TILES.FLOOR.char) {
+                    gameGrid[ny][nx] = { ...TILES.NPC_SURVIVOR, explored: false };
+                }
+            }
+        }
+
+        // --- FIELD OF VIEW (FOV) ---
+
+        /**
+         * Calculates the player's visible area
+         */
+        function calculateFOV() {
+            const radius = 8;
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                for (let x = 0; x < MAP_WIDTH; x++) {
+                    fovGrid[y][x] = false;
+                }
+            }
+
+            for (let y = player.y - radius; y <= player.y + radius; y++) {
+                for (let x = player.x - radius; x <= player.x + radius; x++) {
+                    if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) {
+                        continue;
+                    }
+
+                    let dx = x - player.x;
+                    let dy = y - player.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance <= radius) {
+                        if (isLineOfSightClear(player.x, player.y, x, y)) {
+                            fovGrid[y][x] = true;
+                            gameGrid[y][x].explored = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        /**
+         * Reveals the entire map
+         */
+        function revealMap() {
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                for (let x = 0; x < MAP_WIDTH; x++) {
+                    gameGrid[y][x].explored = true;
+                }
+            }
+            calculateFOV(); // Recalculate FOV to keep it active
+            drawGame();
+        }
+
+        /**
+         * Bresenham's line algorithm for FOV and Targeting
+         */
+        function getLineOfSight(x0, y0, x1, y1) {
+            let line = [];
+            let dx = Math.abs(x1 - x0);
+            let dy = Math.abs(y1 - y0);
+            let sx = (x0 < x1) ? 1 : -1;
+            let sy = (y0 < y1) ? 1 : -1;
+            let err = dx - dy;
+
+            while (true) {
+                line.push({x: x0, y: y0});
+                
+                if (x0 === x1 && y0 === y1) {
+                    break;
+                }
+
+                // Check for blocking tile
+                if (x0 < 0 || x0 >= MAP_WIDTH || y0 < 0 || y0 >= MAP_HEIGHT || (gameGrid[y0][x0].transparent === false && (x0 !== x1 || y0 !== y1))) {
+                    return line; // Blocked
+                }
+
+                let e2 = 2 * err;
+                if (e2 > -dy) {
+                    err -= dy;
+                    x0 += sx;
+                }
+                if (e2 < dx) {
+                    err += dx;
+                    y0 += sy;
+                }
+            }
+            return line;
+        }
+
+        /**
+         * Checks if a direct line of sight is clear
+         */
+        function isLineOfSightClear(x0, y0, x1, y1) {
+            let dx = Math.abs(x1 - x0);
+            let dy = Math.abs(y1 - y0);
+            let sx = (x0 < x1) ? 1 : -1;
+            let sy = (y0 < y1) ? 1 : -1;
+            let err = dx - dy;
+
+            while (true) {
+                if (x0 === x1 && y0 === y1) {
+                    return true;
+                }
+                
+                // Check for blocking tile (but not the start or end tile)
+                if (x0 < 0 || x0 >= MAP_WIDTH || y0 < 0 || y0 >= MAP_HEIGHT || gameGrid[y0][x0].transparent === false) {
+                    if (x0 !== player.x || y0 !== player.y) return false;
+                }
+
+                let e2 = 2 * err;
+                if (e2 > -dy) {
+                    err -= dy;
+                    x0 += sx;
+                }
+                if (e2 < dx) {
+                    err += dx;
+                    y0 += sy;
+                }
+            }
+        }
+
+        // --- DRAWING ---
+
+        /**
+         * Main draw function
+         */
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Center camera on player
+            const offsetX = -player.x * TILE_SIZE + canvas.width / 2;
+            const offsetY = -player.y * TILE_SIZE + canvas.height / 2;
+
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+
+            // Draw the map
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                for (let x = 0; x < MAP_WIDTH; x++) {
+                    const tile = gameGrid[y][x];
+                    
+                    if (fovGrid[y][x]) {
+                        // Special handling for flashing tiles
+                        if (tile.char === TILES.STIM.char) {
+                            ctx.fillStyle = (Math.floor(Date.now() / 600) % 2 === 0) ? tile.color : tile.exploredColor;
+                        } else {
+                             ctx.fillStyle = tile.color;
+                        }
+                        ctx.fillText(tile.char, x * TILE_SIZE, y * TILE_SIZE);
+                    } else if (tile.explored) {
+                        ctx.fillStyle = tile.exploredColor;
+                        ctx.fillText(tile.char, x * TILE_SIZE, y * TILE_SIZE);
+                    }
+                }
+            }
+
+            // Draw ground items
+            for (const item of groundItems) {
+                if (fovGrid[item.y][item.x]) {
+                    ctx.font = `bold ${TILE_SIZE}px 'Roboto Mono'`;
+                    ctx.fillStyle = (Math.floor(Date.now() / 750) % 2 === 0) ? '#f0e68c' : '#7a7a7a'; // Flash
+                    ctx.fillText('*', item.x * TILE_SIZE, item.y * TILE_SIZE);
+                    ctx.font = `${TILE_SIZE}px 'Roboto Mono'`; // Reset
+                }
+            }
+
+            // Draw enemies
+            for (const enemy of enemies) {
+                if (fovGrid[enemy.y][enemy.x]) {
+                    // Make bosses bigger/bolder
+                    if (enemy.isBoss) {
+                        ctx.font = `bold ${TILE_SIZE*1.2}px 'Roboto Mono'`;
+                        ctx.fillStyle = enemy.color;
+                        ctx.fillText(enemy.char, enemy.x * TILE_SIZE, enemy.y * TILE_SIZE);
+                        ctx.font = `${TILE_SIZE}px 'Roboto Mono'`; // Reset
+                    } else {
+                        ctx.fillStyle = enemy.color;
+                        ctx.fillText(enemy.char, enemy.x * TILE_SIZE, enemy.y * TILE_SIZE);
+                    }
+                }
+            }
+
+            // Draw the player
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText('@', player.x * TILE_SIZE, player.y * TILE_SIZE);
+
+            // Draw targeting UI (if active)
+            if (targeting.active) {
+                // Draw targeting line
+                ctx.globalAlpha = 0.3;
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = TILE_SIZE / 4;
+                ctx.beginPath();
+                const line = getLineOfSight(player.x, player.y, targeting.x, targeting.y);
+                line.forEach((point, index) => {
+                    const x = point.x * TILE_SIZE + TILE_SIZE / 2;
+                    const y = point.y * TILE_SIZE + TILE_SIZE / 2;
+                    if (index === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+
+                // Draw cursor
+                ctx.fillStyle = '#ff0000';
+                ctx.globalAlpha = 0.5;
+                ctx.fillRect(targeting.x * TILE_SIZE, targeting.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                ctx.globalAlpha = 1.0;
+            }
+
+            ctx.restore();
+        }
+
+
+        // --- GAME LOGIC ---
+
+        /**
+         * Handles player input
+         */
+        function handleInput(e) {
+            // Do not process input if in dialog
+            if (gameState.mode === 'dialog' || gameState.gameOver) {
+                if (e.key === 'Escape') {
+                    // Special case: Allow escaping the Codex
+                    if (gameState.codexPage !== 'main') {
+                        openCodex('main'); // Go back to main menu
+                    } else {
+                        closeDialog(false, false); // Close the codex
+                    }
+                }
+                return;
+            }
+            if (gameState.gameOver) return;
+
+
+            // Global cancel key
+            if (e.key === 'Escape') {
+                if (gameState.mode === 'fire') {
+                    cancelFireMode();
+                } else if (gameState.mode === 'scrap') {
+                    setGameMode('explore'); // Cancel scrap mode
+                    addLog("Scrap mode disengaged.");
+                }
+                drawGame();
+                return;
+            }
+
+            // --- FIRE MODE INPUT ---
+            if (gameState.mode === 'fire') {
+                handleFireModeInput(e);
+            } 
+            // --- SCRAP MODE INPUT ---
+            else if (gameState.mode === 'scrap') {
+                // Scrap mode is handled by mouse clicks, not keydown
+                return;
+            }
+            // --- EXPLORE MODE INPUT ---
+            else {
+                handleExploreModeInput(e);
+            }
+
+            // Redraw after any action
+            calculateFOV();
+            drawGame();
+        }
+
+        /**
+         * Handles input when in 'explore' mode
+         */
+        function handleExploreModeInput(e) {
+            let newX = player.x;
+            let newY = player.y;
+            let moved = false;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                    newY--; moved = true; break;
+                case 'ArrowDown':
+                case 's':
+                    newY++; moved = true; break;
+                case 'ArrowLeft':
+                case 'a':
+                    newX--; moved = true; break;
+                case 'ArrowRight':
+                case 'd':
+                    newX++; moved = true; break;
+                case 'g':
+                    pickupItem();
+                    moved = false; 
+                    break;
+                case 'h': // New: Heal
+                    useStim();
+                    moved = false;
+                    break;
+                case 'f':
+                    startFireMode();
+                    moved = false;
+                    break;
+                case 'x': 
+                    setGameMode('scrap');
+                    addLog("Engaging Scrap Mode. Click inventory items to destroy. (Esc to cancel)");
+                    moved = false;
+                    break;
+                case 'c': // New: Codex
+                    openCodex('main'); // Open to main page
+                    moved = false;
+                    break;
+                default: return;
+            }
+
+            if (moved) {
+                movePlayer(newX, newY);
+            }
+        }
+
+        /**
+         * Handles input when in 'fire' mode
+         */
+        function handleFireModeInput(e) {
+            let moved = false;
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                    targeting.y--; moved = true; break;
+                case 'ArrowDown':
+                case 's':
+                    targeting.y++; moved = true; break;
+                case 'ArrowLeft':
+                case 'a':
+                    targeting.x--; moved = true; break;
+                case 'ArrowRight':
+                case 'd':
+                    targeting.x++; moved = true; break;
+                case 'f':
+                    fireWeapon();
+                    break;
+                default: return;
+            }
+            if (moved) {
+                // Clamp cursor to map bounds
+                targeting.x = Math.max(0, Math.min(MAP_WIDTH - 1, targeting.x));
+                targeting.y = Math.max(0, Math.min(MAP_HEIGHT - 1, targeting.y));
+            }
+        }
+
+        /**
+         * Moves the player or interacts with objects/enemies
+         */
+        function movePlayer(x, y) {
+            if (gameState.gameOver) return;
+
+            const targetTile = gameGrid[y][x];
+
+            // Check for enemy at target location
+            const targetEnemy = getEnemyAt(x, y);
+            if (targetEnemy) {
+                // Melee attack only
+                attackEnemy(player, targetEnemy, 'melee');
+                endPlayerTurn();
+                return;
+            }
+
+            // Check for walkable tile
+            if (targetTile.walkable) {
+                player.x = x;
+                player.y = y;
+
+                // Check for interactions
+                if (targetTile.char === TILES.STAIRS_DOWN.char) {
+                    descendFloor();
+                } else if (targetTile.char === TILES.SCRAP.char) {
+                    let scrapGained = 1;
+                    // Junker Perk (GDO)
+                    if (player.perks.includes("JUNKER") && Math.random() < 0.1) {
+                        scrapGained++;
+                        addLog(`Junker perk activates! You find bonus scrap.`, 'perk');
+                    }
+                    gameState.scrap += scrapGained;
+                    gameGrid[y][x] = { ...TILES.FLOOR, explored: true };
+                    addLog(`You scavenged ${scrapGained} unit(s) of Scrap.`);
+                    updateUI();
+                    endPlayerTurn(); // Scrap takes a turn
+                } else if (targetTile.char === TILES.AMMO.char) {
+                    const ammoGained = 6;
+                    gameState.ammo = Math.min(gameState.maxAmmo, gameState.ammo + ammoGained);
+                    gameGrid[y][x] = { ...TILES.FLOOR, explored: true };
+                    addLog(`You find an ammo pack. (+${ammoGained} Ammo)`);
+                    endPlayerTurn(); // Picking up ammo takes a turn
+                } else if (targetTile.char === TILES.STIM.char) {
+                    gameState.stims++;
+                    gameGrid[y][x] = { ...TILES.FLOOR, explored: true };
+                    addLog(`You find a Nuka-Stim!`);
+                    endPlayerTurn(); // Picking up stims takes a turn
+                } else if (targetTile.char === TILES.TRAP_WIRING.char) {
+                    // --- PERK: LIGHT STEPPER ---
+                    if (player.perks.includes("LIGHT_STEPPER")) {
+                        addLog(`Light Stepper perk lets you avoid the wiring.`, 'perk');
+                    } else {
+                        addLog(`You step on faulty wiring and get a shock!`);
+                        takeDamage(player, targetTile.damage, targetTile.type);
+                    }
+                    endPlayerTurn();
+                } else if (targetTile.char === TILES.TRAP_ACID.char) {
+                    // --- PERK: LIGHT STEPPER ---
+                    if (player.perks.includes("LIGHT_STEPPER")) {
+                        addLog(`Light Stepper perk lets you walk over the acid.`, 'perk');
+                    } else {
+                        addLog(`You step in a slick of bubbling acid!`);
+                        takeDamage(player, targetTile.damage, targetTile.type);
+                    }
+                    endPlayerTurn();
+                } else if (targetTile.char === TILES.TRAP_RADS.char) {
+                    // --- PERK: LIGHT STEPPER ---
+                    if (player.perks.includes("LIGHT_STEPPER")) {
+                        addLog(`Light Stepper perk lets you ignore the hotspot.`, 'perk');
+                    } else {
+                        addLog(`You step into a radiation hotspot! SICKNESS DETECTED.`);
+                        takeDamage(player, targetTile.damage, targetTile.type); // This is an instant radiation dose
+                    }
+                    endPlayerTurn();
+                } else if (targetTile.char === TILES.NPC_AI.char) {
+                    openAIDialog();
+                } else if (targetTile.char === TILES.NPC_TRADER.char) {
+                    openTraderDialog();
+                } else if (targetTile.char === TILES.NPC_SURVIVOR.char) {
+                    openSurvivorDialog();
+                } else {
+                    endPlayerTurn();
+                }
+            } else {
+                addLog(`You bump into a wall.`);
+            }
+        }
+
+        /**
+         * Processes the end of the player's turn (e.g., enemy AI, radiation)
+         */
+        function endPlayerTurn() {
+            // Do not process if in dialog or perk selection
+            if (gameState.mode === 'dialog') return;
+            
+            // Process ambient radiation
+            absorbRadiation();
+
+            // Process enemy AI
+            for (const enemy of enemies) {
+                if (gameState.gameOver) break; 
+                
+                // --- BOSS AI ---
+                if (enemy.isBoss) {
+                    enemy.turnCount++;
+                    if (enemy.turnsToSpawnMinion && enemy.turnCount >= enemy.turnsToSpawnMinion) {
+                        spawnMinion(enemy);
+                        enemy.turnCount = 0;
+                    }
+                }
+
+                // --- Standard AI ---
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+
+                if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
+                    // Attack if adjacent
+                    attackEnemy(enemy, player, 'melee');
+                } else {
+                    // Simple move towards player (if in FOV - for future, for now just basic)
+                    // This is a basic "move towards"
+                    let moveX = enemy.x;
+                    let moveY = enemy.y;
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        moveX += Math.sign(dx);
+                    } else {
+                        moveY += Math.sign(dy);
+                    }
+                    
+                    // Check if new spot is walkable and not occupied
+                    if (gameGrid[moveY][moveX].walkable && !getEnemyAt(moveX, moveY) && (moveX !== player.x || moveY !== player.y)) {
+                        enemy.x = moveX;
+                        enemy.y = moveY;
+                    }
+                }
+            }
+            
+            updateUI();
+        }
+
+        /**
+         * Boss spawns a minion
+         */
+        function spawnMinion(boss) {
+            let spawnX, spawnY;
+            let attempts = 0;
+            
+            let minionTemplate;
+            if (boss.name === ENEMIES.BOSS_HEAD_JANITOR.name) {
+                minionTemplate = ENEMIES.SCRUB_BOT;
+            } else if (boss.name === ENEMIES.BOSS_GIGA_GOO.name) {
+                minionTemplate = ENEMIES.GOO_MINION;
+            } else {
+                return; // Unknown boss
+            }
+
+            // Try to find an empty adjacent tile
+            while(attempts < 10) {
+                spawnX = boss.x + Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
+                spawnY = boss.y + Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
+                
+                if (spawnX === boss.x && spawnY === boss.y) continue; // Don't spawn on self
+                if (spawnX < 0 || spawnX >= MAP_WIDTH || spawnY < 0 || spawnY >= MAP_HEIGHT) continue;
+
+                if (gameGrid[spawnY][spawnX].walkable && !getEnemyAt(spawnX, spawnY) && (spawnX !== player.x || spawnY !== player.y)) {
+                    enemies.push({
+                        ...minionTemplate,
+                        x: spawnX, 
+                        y: spawnY, 
+                        health: minionTemplate.health,
+                        maxHealth: minionTemplate.maxHealth
+                    });
+                    addLog(`The ${boss.name} spawns a ${minionTemplate.name}!`);
+                    return; // Succeeded
+                }
+                attempts++;
+            }
+            addLog(`The ${boss.name} fails to spawn a minion.`);
+        }
+
+        /**
+         * Handles an attack from an attacker to a target
+         */
+        function attackEnemy(attacker, target, attackType) {
+            let damage;
+            let damageType;
+            let weapon = attacker.equipment ? attacker.equipment.weapon : null;
+            let isCrit = false;
+            let isBroken = false;
+
+            if (attacker === player) {
+                // --- Player Attack ---
+                let baseDamage = 0;
+                let perkDamage = 0;
+
+                if (attackType === 'ranged') {
+                    if (weapon && weapon.weaponType === 'ranged') {
+                        baseDamage = (weapon.stats.Damage || 0) + gameState.stats.AGI; // GDO: AGI for ranged
+                        damageType = weapon.damageType || 'physical';
+                        // No durability on ranged
+                    } else {
+                        addLog("Error: Ranged attack with no ranged weapon?");
+                        return; // Can't attack
+                    }
+                } else { // melee
+                    // Perk: Heavy Hand
+                    if (player.perks.includes("HEAVY_HAND")) {
+                        perkDamage = 3;
+                    }
+
+                    if (weapon && weapon.weaponType === 'melee' && weapon.durability > 0) {
+                        baseDamage = (weapon.stats.Damage + gameState.stats.STR + perkDamage); // GDO: STR for melee
+                        damageType = weapon.damageType || 'physical';
+                        damageItem(weapon, 1);
+                        isBroken = (weapon.durability <= 0);
+                    } else {
+                        baseDamage = (player.baseDamage + gameState.stats.STR + perkDamage); // Fist damage
+                        damageType = 'physical';
+                        if (weapon && weapon.durability <= 0) {
+                             addLog("Your weapon is broken! Attacking with fists.");
+                        }
+                    }
+                }
+
+                // Perk: Rad Conditioning
+                if (player.perks.includes("RAD_CONDITIONING")) {
+                    let radBonus = Math.floor(gameState.radiation / 10) * 0.01; // +1% per 10 rads
+                    baseDamage = Math.floor(baseDamage * (1 + radBonus));
+                }
+                
+                // Critical Hit Check
+                let critChance = 5 + (gameState.stats.LUCK * 1.5); // 5% base + 1.5% per LUCK
+                if (Math.random() * 100 < critChance) {
+                    isCrit = true;
+                    damage = baseDamage * 2;
+                } else {
+                    damage = baseDamage;
+                }
+
+            } else {
+                // --- Enemy Attack ---
+                damage = attacker.damage;
+                damageType = attacker.damageType || 'physical';
+                // Note: Enemies can't crit... yet.
+            }
+
+            // Calculate damage reduction
+            let resistance = 0;
+            if (target === player) {
+                // Armor Degradation
+                if (player.equipment.armor) {
+                    // damageItem(player.equipment.armor, 1);
+                }
+
+                if (damageType === 'energy' || damageType === 'acid') {
+                    resistance = player.totalEnergyDR;
+                } else if (damageType === 'radiation') {
+                    resistance = player.totalRadDR; // Ghouls deal rad damage
+                } else {
+                    resistance = player.totalPhysicalDR;
+                }
+            } else {
+                resistance = 0; // TODO: Enemy resistances?
+            }
+
+            const finalDamage = Math.max(0, damage - resistance);
+            
+            // Radiation damage from enemies is special: it hurts health AND adds radiation
+            if (damageType === 'radiation' && target === player) {
+                player.health -= finalDamage;
+                gameState.radiation = Math.min(100, gameState.radiation + finalDamage); // Add radiation
+                updatePlayerStats(); // Recalculate max health
+            } else {
+                target.health -= finalDamage;
+            }
+
+            // Log the attack
+            let critMsg = isCrit ? '!! CRITICAL HIT !! ' : '';
+            if (attacker === player) {
+                addLog(`${critMsg}You hit the ${target.name} for ${finalDamage} ${damageType} damage. (${target.health}/${target.maxHealth})`, isCrit ? 'crit-hit' : 'game');
+                if (isBroken) {
+                    addLog(`Your ${weapon.name} breaks!`);
+                }
+            } else {
+                addLog(`The ${attacker.name} hits you for ${finalDamage} ${damageType} damage!`);
+            }
+            
+            updateEquipmentUI(); // Update durability display
+
+            // Check for death
+            if (target.health <= 0) {
+                if (target === player) {
+                    killPlayer();
+                } else {
+                    killEnemy(target, attackType); // Pass attack type
+                }
+            }
+        }
+        
+        /**
+         * Damages a melee item, reducing its durability
+         */
+        function damageItem(item, amount) {
+            if (!item || item.weaponType !== 'melee') return; // Only melee has durability
+            
+            // Perk: Greasemonkey
+            let durabilityLoss = amount;
+            if (player.perks.includes("GREASEMONKEY") && Math.random() < 0.5) { // 50% chance to ignore
+                durabilityLoss = 0;
+            }
+
+            if (item.durability > 0) {
+                item.durability -= durabilityLoss;
+                if (item.durability < 0) {
+                    item.durability = 0;
+                }
+            }
+        }
+
+        /**
+         * Generic damage function (mostly for traps)
+         */
+        function takeDamage(target, amount, type = 'physical') {
+            if (target !== player) return;
+
+            let resistance = 0;
+            if (type === 'energy' || type === 'acid') {
+                resistance = player.totalEnergyDR;
+            } else if (type === 'radiation') {
+                resistance = 0; // Radiation traps bypass DR
+            } else {
+                resistance = player.totalPhysicalDR;
+            }
+            const finalDamage = Math.max(0, amount - resistance);
+            
+            if (type === 'radiation') {
+                // Radiation hotspots add radiation, not remove HP directly
+                gameState.radiation = Math.min(100, gameState.radiation + finalDamage);
+                addLog(`You absorb ${finalDamage} points of direct radiation!`);
+                updatePlayerStats(); // Recalculate max HP
+            } else {
+                player.health -= finalDamage;
+                addLog(`You take ${finalDamage} ${type} damage.`);
+            }
+            
+            if (player.health <= 0) {
+                killPlayer();
+            }
+            updateUI();
+        }
+
+        /**
+         * Kills an enemy
+         */
+        function killEnemy(enemy, attackType) {
+            addLog(`The ${enemy.name} collapses! You gain ${enemy.xpValue} XP.`);
+            gainXP(enemy.xpValue);
+            
+            // Perk: Bullet Storm (NEW)
+            if (attackType === 'ranged' && player.perks.includes("BULLET_STORM")) {
+                gameState.ammo = Math.min(gameState.maxAmmo, gameState.ammo + 1);
+                addLog(`Bullet Storm refunds 1 Ammo!`, 'perk');
+            }
+
+            let enemyX = enemy.x;
+            let enemyY = enemy.y;
+            
+            // LUCK influences loot chance
+            let lootChance = enemy.baseLootChance + (gameState.stats.LUCK * 0.02); // Each LUCK adds 2%
+            
+            if (Math.random() < lootChance) {
+                if (enemy.isBoss) {
+                    // Boss drops specific loot
+                    dropLoot(enemyX, enemyY, enemy.guaranteedLoot);
+                } else {
+                    dropLoot(enemyX, enemyY); // Drop from standard tables
+                }
+            }
+
+            // --- BOSS DEATH ---
+            if (enemy.isBoss) {
+                gameState.bossAlive = false;
+                addLog(`*** The ${enemy.name} is defeated! ***`);
+                // Spawn stairs on boss death
+                gameGrid[enemyY][enemyX] = { ...TILES.STAIRS_DOWN, explored: true };
+            }
+
+            enemies = enemies.filter(e => e !== enemy);
+        }
+
+        /**
+         * Grants XP to the player and checks for level up
+         */
+        function gainXP(amount) {
+            player.xp += amount;
+            if (player.xp >= player.xpToNextLevel) {
+                levelUp();
+            }
+            updateUI();
+        }
+
+        /**
+         * Levels up the player
+         */
+        function levelUp() {
+            player.level++;
+            player.xp = player.xp - player.xpToNextLevel;
+            player.xpToNextLevel = Math.floor(player.xpToNextLevel * 1.5);
+            player.statPoints++;
+            
+            addLog(`*** LEVEL UP! *** You are now Level ${player.level}.`, 'perk');
+            addLog(`You have 1 stat point to spend.`);
+            
+            // GDO: Perk every 5 levels
+            if (player.level % 5 === 0) {
+                player.perkPoints++;
+                addLog(`*** PERK POINT GAINED! ***`, 'perk');
+                // *** FIX: Delay the dialog call to prevent race condition ***
+                setTimeout(openPerkDialog, 50);
+            }
+
+            updatePlayerStats();
+            // Heal player on level-up
+            player.health = player.maxHealth;
+            
+            updateUI();
+        }
+
+        /**
+         * Spends a stat point
+         */
+        window.spendStatPoint = function(stat) {
+            if (player.statPoints > 0) {
+                gameState.stats[stat]++;
+                player.statPoints--;
+                addLog(`You increased ${stat}.`);
+                updatePlayerStats();
+                updateUI();
+            }
+        }
+
+        /**
+         * Kills the player
+         */
+        function killPlayer() {
+            // --- PERK: NERVES OF STEEL (NEW) ---
+            if (player.perks.includes("NERVES_OF_STEEL") && !player.nervesOfSteelUsedThisFloor) {
+                player.nervesOfSteelUsedThisFloor = true;
+                player.health = Math.floor(player.maxHealth * 0.50); // Heal to 50%
+                addLog("!! NERVES OF STEEL !! A jolt of adrenaline saves you from death!", 'perk');
+                updateUI();
+                return; // Death is averted
+            }
+            
+            addLog("Your connection to the ATOM-CRAWLER unit has been severed. [ FATAL ]");
+            gameState.gameOver = true;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        /**
+         * Moves to the next floor
+         */
+        function descendFloor() {
+            gameState.floor++;
+            // Update Sector based on GDO
+            if (gameState.floor > 30) gameState.sector = 4; // TODO: "The Deep"
+            else if (gameState.floor > 20) gameState.sector = 3;
+            else if (gameState.floor > 10) gameState.sector = 2;
+            else gameState.sector = 1;
+
+            addLog(`You take the elevator deeper into the bunker...`);
+            createDungeon();
+        }
+        
+        /**
+         * Finds a safe adjacent tile for spawning loot
+         */
+        function findSafeAdjacentTile(x, y) {
+            // Check adjacent tiles in a spiral
+            const directions = [
+                {x: 0, y: -1}, // N
+                {x: 1, y: 0},  // E
+                {x: 0, y: 1},  // S
+                {x: -1, y: 0}, // W
+                {x: 1, y: -1}, // NE
+                {x: 1, y: 1},  // SE
+                {x: -1, y: 1}, // SW
+                {x: -1, y: -1} // NW
+            ];
+
+            for (const dir of directions) {
+                const newX = x + dir.x;
+                const newY = y + dir.y;
+                if (newX < 0 || newX >= MAP_WIDTH || newY < 0 || newY >= MAP_HEIGHT) {
+                    continue;
+                }
+                // Check if tile is walkable and not the player
+                if (gameGrid[newY][newX].walkable && (newX !== player.x || newY !== player.y)) {
+                    return { x: newX, y: newY };
+                }
+            }
+            
+            // Failsafe: return original spot
+            return { x, y }; 
+        }
+
+        /**
+         * Gets the enemy at a specific coordinate
+         */
+        function getEnemyAt(x, y) {
+            return enemies.find(enemy => enemy.x === x && enemy.y === y);
+        }
+
+        /**
+         * Gets the ground item at a specific coordinate
+         */
+        function getGroundItemAt(x, y) {
+            return groundItems.find(item => item.x === x && item.y === y);
+        }
+
+        /**
+         * Sets the current game mode and updates UI
+         */
+        function setGameMode(mode) {
+            gameState.mode = mode;
+
+            // Update Inventory UI for Scrap Mode
+            if (mode === 'scrap') {
+                inventoryTitle.textContent = "INVENTORY (SCRAPPING)";
+                inventoryTitle.classList.add('scrap-mode');
+                inventoryList.classList.add('scrap-mode');
+            } else {
+                inventoryTitle.textContent = "INVENTORY";
+                inventoryTitle.classList.remove('scrap-mode');
+                inventoryList.classList.remove('scrap-mode');
+            }
+
+            if (mode === 'explore') {
+                targeting.active = false;
+            }
+            
+            if (mode === 'dialog') {
+                dialogScreen.style.display = 'flex';
+            } else {
+                dialogScreen.style.display = 'none';
+            }
+            
+            updateInventoryUI(); // Redraw inventory to apply click handlers
+        }
+
+        // --- RANGED COMBAT ---
+
+        /**
+         * Enters Fire Mode
+         */
+        function startFireMode() {
+            const weapon = player.equipment.weapon;
+            if (!weapon || weapon.weaponType !== 'ranged') {
+                addLog("You don't have a ranged weapon equipped!");
+                return;
+            }
+            if (gameState.ammo <= 0) {
+                addLog("You're out of ammo! *click*");
+                return;
+            }
+
+            setGameMode('fire');
+            targeting.active = true;
+            targeting.x = player.x;
+            targeting.y = player.y;
+            addLog("Fire Mode engaged. Use (WASD/Arrows) to aim, 'f' to fire, 'Esc' to cancel.");
+        }
+
+        /**
+         * Cancels Fire Mode
+         */
+        function cancelFireMode() {
+            setGameMode('explore');
+            addLog("Fire Mode disengaged.");
+        }
+
+        /**
+         * Fires the equipped ranged weapon
+         */
+        function fireWeapon() {
+            if (!targeting.active) return;
+            
+            // 1. Consume resources
+            gameState.ammo--;
+            
+            // 2. Check Line of Sight
+            const line = getLineOfSight(player.x, player.y, targeting.x, targeting.y);
+            const targetPoint = line[line.length - 1];
+            
+            if (targetPoint.x !== targeting.x || targetPoint.y !== targeting.y) {
+                addLog("Your shot hits a wall!");
+            } else {
+                // 3. Check for target
+                const targetEnemy = getEnemyAt(targeting.x, targeting.y);
+                if (targetEnemy) {
+                    addLog(`You fire your ${player.equipment.weapon.name} at the ${targetEnemy.name}!`);
+                    attackEnemy(player, targetEnemy, 'ranged');
+                } else {
+                    addLog("You fire your weapon, hitting nothing but dust.");
+                }
+            }
+            
+            // 4. Exit fire mode and end turn
+            setGameMode('explore');
+            endPlayerTurn();
+        }
+
+        // --- INVENTORY & LOOT ---
+
+        /**
+         * Drops loot at a specific coordinate
+         * @param {number} x - x coordinate
+         * @param {number} y - y coordinate
+         * @param {object} [forcedItem=null] - A specific item to drop (e.g., boss loot)
+         */
+        function dropLoot(x, y, forcedItem = null) {
+            let itemTemplate;
+            let itemTier = gameState.sector;
+            
+            // Perk: Pre-War Schematic
+            if (player.perks.includes("PRE_WAR_SCHEMATIC") && !forcedItem) {
+                itemTier++;
+            }
+            
+            if (forcedItem) {
+                itemTemplate = { ...forcedItem };
+            } else {
+                let lootTable;
+                switch(itemTier) {
+                    case 4: // Schematic perk in Sector 3
+                    case 3:
+                        lootTable = LOOT_TABLE_TIER_3;
+                        break;
+                    case 2:
+                        lootTable = LOOT_TABLE_TIER_2;
+                        break;
+                    case 1:
+                    default:
+                        lootTable = LOOT_TABLE_TIER_1;
+                        break;
+                }
+                itemTemplate = { ...lootTable[Math.floor(Math.random() * lootTable.length)] };
+            }
+            
+            // Create a fresh instance with durability if applicable
+            let newItem = createItemInstance(itemTemplate);
+            
+            // *** BUG FIX: Find a safe spot for loot ***
+            let lootPos;
+            if (forcedItem) { // Only do this for boss loot
+                lootPos = findSafeAdjacentTile(x, y);
+            } else {
+                lootPos = { x, y }; // Normal loot drops on enemy corpse
+            }
+            
+            newItem.x = lootPos.x;
+            newItem.y = lootPos.y;
+            
+            groundItems.push(newItem);
+            addLog(`The ${newItem.name} clatters to the floor.`);
+        }
+
+        /**
+         * Picks up an item from the ground
+         */
+        function pickupItem() {
+            const item = getGroundItemAt(player.x, player.y);
+            if (item) {
+                player.inventory.push(item);
+                groundItems = groundItems.filter(i => i !== item);
+                addLog(`You pick up the ${item.name}.`);
+                updateUI();
+            } else {
+                addLog(`There is nothing to pick up here.`);
+            }
+        }
+
+        /**
+         * Handles clicking an inventory item. Either equips or scraps.
+         */
+        window.handleInventoryClick = function(inventoryIndex) {
+            if (gameState.mode === 'scrap') {
+                scrapItem(inventoryIndex);
+            } else {
+                equipItem(inventoryIndex);
+            }
+        }
+
+        /**
+         * Equips an item from inventory
+         */
+        function equipItem(inventoryIndex) {
+            const item = player.inventory[inventoryIndex];
+            if (!item) return;
+
+            const currentItem = player.equipment[item.slot];
+            if (currentItem) {
+                unequipItem(item.slot);
+            }
+
+            player.equipment[item.slot] = item;
+            player.inventory.splice(inventoryIndex, 1);
+            
+            addLog(`You equip the ${item.name}.`);
+            updatePlayerStats();
+            updateUI();
+        }
+
+        /**
+         * Unequips an item
+         */
+        window.unequipItem = function(slot) {
+            const item = player.equipment[slot];
+            if (!item) return;
+            
+            // Don't allow unequipping in scrap mode
+            if (gameState.mode === 'scrap') {
+                addLog("Cannot unequip items while in Scrap Mode. (Esc to cancel)");
+                return;
+            }
+
+            player.inventory.push(item);
+            player.equipment[slot] = null;
+
+            addLog(`You unequip the ${item.name}.`);
+            updatePlayerStats();
+            updateUI();
+        }
+
+        /**
+         * Scraps an item from inventory
+         */
+        function scrapItem(inventoryIndex) {
+            const item = player.inventory[inventoryIndex];
+            if (!item) return;
+            
+            // Cannot scrap equipped items (this shouldn't happen, but good check)
+            if (Object.values(player.equipment).includes(item)) {
+                addLog("Cannot scrap equipped items!");
+                return;
+            }
+
+            let scrapGained = 0;
+            switch(item.tier) {
+                case 3: scrapGained = 5; break;
+                case 2: scrapGained = 3; break;
+                case 1: 
+                default:
+                    scrapGained = 1; break;
+            }
+            
+            gameState.scrap += scrapGained;
+            player.inventory.splice(inventoryIndex, 1);
+
+            addLog(`You break down the ${item.name} into ${scrapGained} Scrap.`);
+            setGameMode('explore'); // Exit scrap mode after one item
+            
+            // Scrapping takes a turn
+            endPlayerTurn();
+            calculateFOV();
+            drawGame();
+        }
+        
+        // --- DIALOG SYSTEM (GDO) ---
+        
+        /**
+         * Opens the AI Fragment dialog
+         */
+        function openAIDialog() {
+            setGameMode('dialog');
+            
+            // Set AI dialog styling
+            dialogPanel.className = "dialog-panel ai-dialog";
+            dialogTitle.className = "dialog-title ai-title";
+            
+            dialogTitle.textContent = "Rogue AI-Fragment";
+            dialogBody.textContent = "Query: This unit offers services in exchange for [Scrap]. Assistance required? (Current Scrap: " + gameState.scrap + ")";
+            dialogOptions.innerHTML = ''; // Clear options
+            
+            const repairCost = 5;
+            const mapCost = 10;
+            const buffCost = 5;
+
+            // --- REPAIR OPTIONS (NEW) ---
+            const weapon = player.equipment.weapon;
+
+            if (weapon && weapon.weaponType === 'melee') { // Only show for melee weapons
+                const repairWeaponBtn = document.createElement('button');
+                repairWeaponBtn.className = 'dialog-option ai-option';
+                repairWeaponBtn.textContent = `[${repairCost} Scrap] Repair equipped melee weapon (${weapon.name}).`;
+                if (gameState.scrap < repairCost || weapon.durability === weapon.stats.Durability) {
+                    repairWeaponBtn.disabled = true;
+                }
+                repairWeaponBtn.onclick = () => {
+                    gameState.scrap -= repairCost;
+                    weapon.durability = weapon.stats.Durability;
+                    addLog(`The AI applies repair gel to your ${weapon.name}.`);
+                    updateEquipmentUI();
+                    closeDialog(true, true); // Took action, consume AI
+                };
+                dialogOptions.appendChild(repairWeaponBtn);
+            }
+            
+            // --- STANDARD OPTIONS ---
+            
+            // Option 1: Reveal Map
+            const mapButton = document.createElement('button');
+            mapButton.className = 'dialog-option ai-option';
+            mapButton.textContent = `[${mapCost} Scrap] Reveal local topography.`;
+            if (gameState.scrap < mapCost) {
+                mapButton.disabled = true;
+            }
+            mapButton.onclick = () => {
+                gameState.scrap -= mapCost;
+                revealMap();
+                addLog(`The AI uploads the floor map to your V.T.S.`);
+                closeDialog(true, true); // Took action, consume AI
+            };
+            dialogOptions.appendChild(mapButton);
+
+            // Option 2: Buff
+            const buffButton = document.createElement('button');
+            buffButton.className = 'dialog-option ai-option';
+            buffButton.textContent = `[${buffCost} Scrap] Augment vital signs (+10 Temp Max HP).`;
+            if (gameState.scrap < buffCost) {
+                buffButton.disabled = true;
+            }
+            buffButton.onclick = () => {
+                gameState.scrap -= buffCost;
+                player.baseMaxHealth += 10; // Apply temporary buff
+                player.health += 10; // Heal for the buffed amount
+                updatePlayerStats(); // Recalculate health
+                addLog(`You feel a surge of energy! (+10 Temp Max HP)`);
+                closeDialog(true, true); // Took action, consume AI
+            };
+            dialogOptions.appendChild(buffButton);
+
+            // Option 3: Exit
+            const exitButton = document.createElement('button');
+            exitButton.className = 'dialog-option exit';
+            exitButton.textContent = "[Leave] End transaction.";
+            exitButton.onclick = () => closeDialog(false, true); // No action, but still consume AI
+            dialogOptions.appendChild(exitButton);
+        }
+        
+        /**
+         * Opens the Wandering Trader dialog (NEW)
+         */
+        function openTraderDialog() {
+            setGameMode('dialog');
+            
+            // Set Trader dialog styling
+            dialogPanel.className = "dialog-panel trader-dialog";
+            dialogTitle.className = "dialog-title trader-title";
+            
+            dialogTitle.textContent = "Wandering Trader";
+            dialogBody.textContent = `"...Another one? Got some rare goods, if you've got the scrap. Don't waste my time." (Current Scrap: ${gameState.scrap})`;
+            
+            // Generate stock ONCE per encounter
+            if (Object.keys(gameState.traderStock).length === 0) {
+                // Generate random gear based on GDO logic
+                let lootTable = [];
+                if (gameState.sector === 1) { // T1/T2
+                    lootTable = [...LOOT_TABLE_TIER_1, ...LOOT_TABLE_TIER_2];
+                } else if (gameState.sector === 2) { // T2/T3
+                    lootTable = [...LOOT_TABLE_TIER_2, ...LOOT_TABLE_TIER_3];
+                } else { // T3+
+                    lootTable = [...LOOT_TABLE_TIER_3];
+                }
+                const randomItemTemplate = lootTable[Math.floor(Math.random() * lootTable.length)];
+                
+                gameState.traderStock = {
+                    "STIM": {
+                        name: "Nuka-Stim (x1)",
+                        cost: 10,
+                        stock: 1,
+                        action: () => { gameState.stims++; }
+                    },
+                    "AMMO": {
+                        name: "Ammo Pack (x6)",
+                        cost: 5,
+                        stock: 1,
+                        action: () => { gameState.ammo = Math.min(gameState.maxAmmo, gameState.ammo + 6); }
+                    },
+                    "GEAR": {
+                        name: `Random Gear (${randomItemTemplate.name})`,
+                        cost: 15,
+                        stock: 1,
+                        item: randomItemTemplate,
+                        action: () => { 
+                            let newItem = createItemInstance(randomItemTemplate);
+                            player.inventory.push(newItem); 
+                        }
+                    }
+                };
+            }
+            
+            refreshTraderOptions(); // Draw the options
+        }
+        
+        /**
+         * Redraws the trader dialog options (after a purchase)
+         */
+        function refreshTraderOptions() {
+            dialogOptions.innerHTML = ''; // Clear options
+            
+            const stock = gameState.traderStock;
+            
+            // Iterate over stock
+            for (const key in stock) {
+                const item = stock[key];
+                const button = document.createElement('button');
+                button.className = 'dialog-option trader-option';
+                button.textContent = `[${item.cost} Scrap] ${item.name}`;
+                
+                if (gameState.scrap < item.cost || item.stock <= 0) {
+                    button.disabled = true;
+                    if (item.stock <= 0) {
+                        button.textContent = `[SOLD OUT] ${item.name}`;
+                    }
+                }
+                
+                button.onclick = () => {
+                    gameState.scrap -= item.cost;
+                    item.stock--;
+                    item.action(); // Perform the purchase action
+                    addLog(`You purchase the ${item.name}.`);
+                    dialogBody.textContent = `"...Pleasure doing business." (Current Scrap: ${gameState.scrap})`; // Update body text
+                    refreshTraderOptions(); // Redraw
+                };
+                dialogOptions.appendChild(button);
+            }
+
+            // Exit Button
+            const exitButton = document.createElement('button');
+            exitButton.className = 'dialog-option exit';
+            exitButton.textContent = "[Leave] Thanks for the trade.";
+            exitButton.onclick = () => closeDialog(false, true); // No action, but consumes NPC
+            dialogOptions.appendChild(exitButton);
+        }
+        
+        /**
+         * Opens the Cowering Survivor dialog (NEW)
+         */
+        function openSurvivorDialog() {
+            setGameMode('dialog');
+            
+            // Set Survivor dialog styling
+            dialogPanel.className = "dialog-panel survivor-dialog";
+            dialogTitle.className = "dialog-title survivor-title";
+            
+            dialogTitle.textContent = "Cowering Survivor";
+            dialogOptions.innerHTML = ''; // Clear options
+            
+            const enemiesRemaining = enemies.length;
+            
+            if (enemiesRemaining > 0) {
+                // Quest is active or needs to be started
+                gameState.survivorQuestActive = true;
+                dialogBody.textContent = `"...Oh god, don't hurt me! You... you're not one of them! Please, you have to help me! Clear this floor, kill those *things*... I'll... I'll make it worth your while!"\n\n(Enemies Remaining: ${enemiesRemaining})`;
+                
+                const exitButton = document.createElement('button');
+                exitButton.className = 'dialog-option survivor-option';
+                exitButton.textContent = "[Leave] I'll see what I can do.";
+                exitButton.onclick = () => closeDialog(false, false); // No action, don't consume
+                dialogOptions.appendChild(exitButton);
+                
+            } else if (enemiesRemaining === 0 && gameState.survivorQuestActive) {
+                // Quest complete!
+                dialogBody.textContent = `"...You did it. You actually did it! I... I don't know how to thank you. Here, take this, it's all I have. I'm getting out of here. Good luck."`;
+                
+                const rewardButton = document.createElement('button');
+                rewardButton.className = 'dialog-option survivor-option';
+                rewardButton.textContent = "[Accept] Thank you.";
+                rewardButton.onclick = () => {
+                    // Give reward
+                    gameState.stims++;
+                    addLog("The survivor gives you a Nuka-Stim!");
+                    // Give random gear
+                    dropLoot(player.x, player.y, null); // dropLoot handles sector logic
+                    addLog("The survivor drops some gear for you!");
+                    
+                    closeDialog(false, true); // No action, but *consume* NPC
+                };
+                dialogOptions.appendChild(rewardButton);
+
+            } else {
+                // Quest is not active and no enemies are on the floor (e.g. came back)
+                dialogBody.textContent = `"...I... I think they're gone. Thank you for checking. I'm... I'm going to stay here. It's not safe."`;
+                
+                const exitButton = document.createElement('button');
+                exitButton.className = 'dialog-option survivor-option';
+                exitButton.textContent = "[Leave] Stay safe.";
+                exitButton.onclick = () => closeDialog(false, false); // No action, don't consume
+                dialogOptions.appendChild(exitButton);
+            }
+        }
+        
+        /**
+         * Opens the Perk Selection dialog
+         */
+        function openPerkDialog() {
+            addLog("System: openPerkDialog() called.", "system"); // Debug log
+            setGameMode('dialog');
+            
+            // Set Perk dialog styling
+            dialogPanel.className = "dialog-panel perk-dialog";
+            dialogTitle.className = "dialog-title perk-title";
+            
+            dialogTitle.textContent = `LEVEL ${player.level} - CHOOSE A PERK`;
+            dialogBody.textContent = "Your S.P.E.C.I.A.L. training has paid off. Select a new perk to unlock.";
+            dialogOptions.innerHTML = ''; // Clear options
+            
+            // --- Get available perks ---
+            const allPerks = [
+                ...PERKS.COMMON,
+                ...PERKS.RARE,
+                ...PERKS.LEGENDARY
+            ];
+
+            // Filter out perks player already has
+            const unownedPerks = allPerks.filter(p => !player.perks.includes(p.id));
+
+            // Select 3 perks based on rarity
+            let perkChoices = [];
+            for (let i = 0; i < 3; i++) {
+                let chosenPerk = null;
+                // Weighted roll (75/20/5)
+                const roll = Math.random() * 100;
+                
+                if (roll < 5) { // 5% Legendary
+                    chosenPerk = getRandomPerkFromList(PERKS.LEGENDARY, unownedPerks, perkChoices);
+                }
+                if (!chosenPerk && roll < 25) { // 20% Rare (5 + 20)
+                    chosenPerk = getRandomPerkFromList(PERKS.RARE, unownedPerks, perkChoices);
+                }
+                if (!chosenPerk) { // 75% Common
+                    chosenPerk = getRandomPerkFromList(PERKS.COMMON, unownedPerks, perkChoices);
+                }
+                
+                // Failsafe: if we still don't have a perk (e.g., all of that rarity are owned),
+                // just pick any unowned perk
+                if (!chosenPerk) {
+                    const fallbackPool = unownedPerks.filter(p => !perkChoices.includes(p));
+                    if (fallbackPool.length > 0) {
+                        chosenPerk = fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+                    }
+                }
+
+                if (chosenPerk) {
+                    perkChoices.push(chosenPerk);
+                }
+            }
+            
+            // Failsafe: If not enough perks, add a default
+            if (perkChoices.length === 0 && unownedPerks.length > 0) {
+                 perkChoices.push(unownedPerks[0]);
+            }
+            
+            // Ensure no duplicates
+            perkChoices = [...new Set(perkChoices)];
+            
+            if (perkChoices.length === 0) {
+                // This happens if all perks are owned
+                addLog("System: All perks have been acquired!", "system");
+                const exitButton = document.createElement('button');
+                exitButton.className = 'dialog-option perk-option';
+                exitButton.textContent = "All perks acquired. [Close]";
+                exitButton.onclick = () => {
+                    player.perkPoints--; // Consume the point
+                    closeDialog(false, false);
+                };
+                dialogOptions.appendChild(exitButton);
+                return;
+            }
+            
+            perkChoices.forEach(perk => {
+                const perkButton = document.createElement('button');
+                perkButton.className = 'dialog-option perk-option';
+                perkButton.innerHTML = `
+                    ${perk.name}
+                    <span class="perk-desc">
+                        <span class="perk-rarity perk-rarity-${perk.rarity}">[${perk.rarity}]</span>
+                        ${perk.description}
+                    </span>
+                `;
+                perkButton.onclick = () => {
+                    selectPerk(perk);
+                };
+                dialogOptions.appendChild(perkButton);
+            });
+        }
+        
+        /**
+         * Helper for perk dialog to get a random, valid perk
+         */
+        function getRandomPerkFromList(list, unowned, choices) {
+            const available = list.filter(p => unowned.includes(p) && !choices.includes(p));
+            if (available.length > 0) {
+                return available[Math.floor(Math.random() * available.length)];
+            }
+            return null;
+        }
+        
+        /**
+         * Confirms perk selection
+         */
+        function selectPerk(perk) {
+            player.perks.push(perk.id);
+            player.perkPoints--;
+            
+            addLog(`*** PERK ACQUIRED: ${perk.name}! ***`, 'perk');
+            
+            // Apply immediate effects
+            if (perk.id === "TOUGHNESS") {
+                player.baseMaxHealth += 10;
+                player.health += 10;
+            }
+            // Rad Resistant
+            if (perk.id === "RAD_RESISTANT") {
+                // Stat is applied in updatePlayerStats
+            }
+            
+            updatePlayerStats();
+            closeDialog(false, false); // No action, don't consume AI
+            updateUI(); // Update perk list
+        }
+        
+        /**
+         * Opens the Codex/Manual
+         */
+        function openCodex(pageId) {
+            gameState.codexPage = pageId;
+            const page = CODEX[pageId];
+            if (!page) {
+                console.error("Codex page not found:", pageId);
+                return;
+            }
+            
+            setGameMode('dialog'); // Put game in dialog mode
+            
+            // Set Codex dialog styling
+            dialogPanel.className = "dialog-panel codex-dialog";
+            dialogTitle.className = "dialog-title codex-title";
+            
+            dialogTitle.textContent = page.title;
+            dialogBody.textContent = page.body;
+            dialogOptions.innerHTML = ''; // Clear options
+            
+            page.options.forEach(option => {
+                const button = document.createElement('button');
+                
+                if (option.page === 'exit') {
+                    button.className = 'dialog-option codex-back'; // Exit button
+                    button.textContent = option.text;
+                    button.onclick = () => closeDialog(false, false);
+                } else if (option.page === 'main') {
+                    button.className = 'dialog-option codex-back'; // Back button
+                    button.textContent = option.text;
+                    button.onclick = () => openCodex('main');
+                } else {
+                    button.className = 'dialog-option codex-option'; // Standard nav
+                    button.textContent = option.text;
+                    button.onclick = () => openCodex(option.page);
+                }
+                
+                dialogOptions.appendChild(button);
+            });
+        }
+        
+        /**
+         * Closes the dialog window
+         * @param {boolean} tookAction - Whether the player took an action that ends their turn
+         * @param {boolean} consumeNPC - Whether to consume the NPC tile
+         */
+        function closeDialog(tookAction = false, consumeNPC = false) {
+            setGameMode('explore');
+            
+            // Reset codex page
+            gameState.codexPage = 'main';
+            // Reset trader stock
+            gameState.traderStock = {};
+            // Don't reset survivor quest, it's floor-persistent
+            
+            // Remove the NPC after use
+            if (consumeNPC) {
+                gameGrid[player.y][player.x] = { ...TILES.FLOOR, explored: true };
+            }
+
+            if (tookAction) {
+                // Trader actions are free
+                // AI actions cost a turn
+                if (consumeNPC && gameGrid[player.y][player.x].char !== TILES.NPC_TRADER.char) {
+                    endPlayerTurn(); // Spending scrap at AI takes your turn
+                }
+            }
+            
+            calculateFOV();
+            drawGame();
+            updateUI();
+        }
+        
+        // --- SURVIVAL SYSTEMS (HEALING & RADIATION) ---
+        
+        /**
+         * Uses a Nuka-Stim
+         */
+        function useStim() {
+            if (gameState.stims <= 0) {
+                addLog("You are out of Nuka-Stims!");
+                return;
+            }
+            if (player.health >= player.maxHealth) {
+                addLog("You are already at full health.");
+                return;
+            }
+            
+            gameState.stims--;
+            const healAmount = Math.floor(player.maxHealth * 0.40); // Heal 40% of max HP
+            player.health = Math.min(player.maxHealth, player.health + healAmount);
+            
+            addLog(`You inject a Nuka-Stim. The warmth spreads... (+${healAmount} HP)`);
+            endPlayerTurn(); // Using a stim takes a turn
+            updateUI();
+        }
+
+        /**
+         * Applies ambient radiation to the player
+         */
+        function absorbRadiation() {
+            // Base radiation per turn
+            let baseRad = 0.1; // "The Atrium"
+            
+            if (gameState.sector === 3) { // "The Reactor"
+                baseRad = 0.5; // Much higher!
+            } else if (gameState.sector === 2) { // "Bio-Labs"
+                baseRad = 0.15;
+            }
+            
+            // GDO: Rad DR stat resists ambient radiation
+            let absorbedRad = baseRad - (player.totalRadDR * 0.01); // Each point of RadDR reduces rads
+            absorbedRad = Math.max(0, absorbedRad);
+
+            gameState.radiation = Math.min(100, gameState.radiation + absorbedRad);
+            
+            // GDO: High radiation reduces max health
+            updatePlayerStats();
+
+            // Log warnings
+            if (gameState.radiation > 70 && (gameState.radiation - absorbedRad) <= 70) {
+                addLog("!! DANGER !! Radiation levels critical. Max health severely reduced.");
+            } else if (gameState.radiation > 30 && (gameState.radiation - absorbedRad) <= 30) {
+                addLog("! WARNING ! Geiger counter clicks rapidly. Max health is reduced.");
+            }
+        }
+
+        // --- UI & UPDATES ---
+
+        /**
+         * Recalculates all player stats based on level, GDO stats, and equipment
+         */
+        function updatePlayerStats() {
+            // 1. Base stats from GDO
+            let baseHealthFromPerks = 0;
+            let baseRadDRFromPerks = 0;
+            
+            if (player.perks.includes("TOUGHNESS")) {
+                baseHealthFromPerks = 10;
+            }
+            if (player.perks.includes("RAD_RESISTANT")) {
+                baseRadDRFromPerks = 15;
+            }
+
+            player.baseMaxHealth = 80 + (gameState.stats.VIT * 20) + baseHealthFromPerks;
+            
+            player.baseDamage = 5; // Base fist damage
+            player.basePhysicalDR = 0; 
+            player.baseEnergyDR = gameState.stats.ENG - 1;   // GDO: ENG
+            player.baseRadDR = (gameState.stats.ENG - 1) + baseRadDRFromPerks; // GDO: ENG + Perk
+
+            // 2. Apply equipment
+            let weaponDamage = 0;
+            let armorPDR = 0;
+            let armorEDR = 0;
+            let armorRDR = 0;
+            const weapon = player.equipment.weapon;
+            const armor = player.equipment.armor;
+            
+            const isWeaponBroken = (weapon && weapon.weaponType === 'melee' && weapon.durability <= 0);
+            
+            if (weapon) {
+                if (weapon.weaponType === 'ranged') {
+                    // Ranged damage = Weapon Base + AGI bonus
+                    weaponDamage = (weapon.stats.Damage || 0) + (gameState.stats.AGI - 1); // GDO: AGI
+                } else if (weapon.weaponType === 'melee' && !isWeaponBroken) {
+                    // Melee damage = Weapon Base + STR bonus
+                    weaponDamage = (weapon.stats.Damage || 0) + (gameState.stats.STR - 1); // GDO: STR
+                }
+            }
+            // Fist damage
+            const fistDamage = player.baseDamage + (gameState.stats.STR - 1);
+            
+            if (armor) {
+                armorPDR = armor.stats.PhysicalDR || 0;
+                armorEDR = armor.stats.EnergyDR || 0;
+                armorRDR = armor.stats.RadDR || 0;
+            }
+
+            // 4. Set final totals
+            player.totalDamage = (weapon && !isWeaponBroken) ? weaponDamage : fistDamage; // This is a bit complex, handled in attackEnemy
+            player.totalPhysicalDR = player.basePhysicalDR + armorPDR;
+            player.totalEnergyDR = player.baseEnergyDR + armorEDR;
+            player.totalRadDR = player.baseRadDR + armorRDR;
+
+            // 5. Apply radiation to max health (GDO)
+            // The more radiation, the lower the max health (as a percentage)
+            let radPenalty = 1 - (gameState.radiation / 150); // Becomes 1 - (100/150) = 0.33 at max rads
+            player.maxHealth = Math.floor(player.baseMaxHealth * radPenalty);
+            
+            // Clamp health
+            if (player.health > player.maxHealth) {
+                player.health = player.maxHealth;
+            }
+            player.health = Math.max(1, Math.floor(player.health)); // Ensure health is an integer
+            
+            // Log stat changes
+            addLog(`[VTS] Stats updated: HP(${player.maxHealth}) P.DR(${player.totalPhysicalDR}) E.DR(${player.totalEnergyDR}) R.DR(${player.totalRadDR})`, 'system');
+        }
+
+
+        /**
+         * Updates all UI elements
+         */
+        function updateUI() {
+            if (gameState.gameOver) return;
+
+            // VTS Panel
+            healthBar.style.width = `${(player.health / player.maxHealth) * 100}%`;
+            healthText.textContent = `${player.health} / ${player.maxHealth}`;
+            radNeedle.style.left = `${gameState.radiation}%`;
+            floorStat.textContent = gameState.floor;
+            scrapStat.textContent = gameState.scrap;
+            ammoStat.textContent = `${gameState.ammo}/${gameState.maxAmmo}`;
+            stimStat.textContent = gameState.stims; // New
+            
+            // XP and Level
+            levelStat.textContent = player.level;
+            xpBar.style.width = `${(player.xp / player.xpToNextLevel) * 100}%`;
+            xpText.textContent = `${player.xp} / ${player.xpToNextLevel}`;
+
+            // Status
+            if (gameState.radiation > 70) {
+                statusStat.textContent = 'Irradiated';
+                statusStat.style.color = '#ff5050';
+            } else if (player.health < player.maxHealth * 0.3) {
+                statusStat.textContent = 'Critical';
+                statusStat.style.color = '#ff5050';
+            } else if (player.health < player.maxHealth * 0.7) {
+                statusStat.textContent = 'Injured';
+                statusStat.style.color = '#f0e68c';
+            } else {
+                statusStat.textContent = 'Nominal';
+                statusStat.style.color = '#00ff00';
+            }
+
+            // GDO Stats
+            vitStat.textContent = gameState.stats.VIT;
+            engStat.textContent = gameState.stats.ENG;
+            strStat.textContent = gameState.stats.STR;
+            agiStat.textContent = gameState.stats.AGI;
+            luckStat.textContent = gameState.stats.LUCK;
+
+            // Show/Hide stat buttons
+            const showButtons = player.statPoints > 0;
+            document.querySelectorAll('.stat-plus').forEach(btn => {
+                btn.style.display = showButtons ? 'inline-block' : 'none';
+            });
+            statPointText.textContent = showButtons ? `Stat Points Available: ${player.statPoints}` : "";
+
+            // Update Inventory and Equipment
+            updateEquipmentUI();
+            updateInventoryUI();
+            updatePerkUI();
+        }
+        
+        /**
+         * Updates the Perk UI panel
+         */
+        function updatePerkUI() {
+            perkList.innerHTML = ''; // Clear list
+            if (player.perks.length === 0) {
+                perkList.innerHTML = '<li class="text-gray-500 italic">...none...</li>';
+                return;
+            }
+            
+            const allPerks = [...PERKS.COMMON, ...PERKS.RARE, ...PERKS.LEGENDARY];
+
+            player.perks.forEach(perkId => {
+                const perk = allPerks.find(p => p.id === perkId);
+                if (perk) {
+                    const li = document.createElement('li');
+                    li.className = 'perk-item';
+                    li.innerHTML = `
+                        ${perk.name}
+                        <div class="perk-item-desc perk-rarity-${perk.rarity}">[${perk.rarity}] ${perk.description}</div>
+                    `;
+                    perkList.appendChild(li);
+                }
+            });
+        }
+
+        /**
+         * Updates the Equipment UI
+         */
+        function updateEquipmentUI() {
+            // Weapon
+            const weapon = player.equipment.weapon;
+            if (weapon) {
+                let durabilityHTML = '';
+                let isBroken = false;
+                
+                // Only show durability for melee weapons
+                if (weapon.weaponType === 'melee') {
+                    isBroken = weapon.durability <= 0;
+                    durabilityHTML = `
+                        <span class="item-durability ${isBroken ? 'item-broken' : ''}">
+                            (DUR: ${weapon.durability}/${weapon.stats.Durability})
+                        </span>
+                    `;
+                }
+
+                weaponSlot.innerHTML = `
+                    <span class="${isBroken ? 'item-broken' : ''}">
+                        ${isBroken ? '[BROKEN] ' : ''}${weapon.name}
+                    </span>
+                    ${durabilityHTML}
+                `;
+                weaponSlot.classList.add('filled');
+                // Tooltip events
+                weaponSlot.onmouseenter = (e) => showTooltip(weapon, e);
+                weaponSlot.onmouseleave = hideTooltip;
+                weaponSlot.onmousemove = (e) => moveTooltip(e);
+            } else {
+                weaponSlot.innerHTML = '[ Empty ]';
+                weaponSlot.classList.remove('filled');
+                weaponSlot.onmouseenter = null;
+                weaponSlot.onmouseleave = null;
+                weaponSlot.onmousemove = null;
+            }
+            
+            // Armor
+            const armor = player.equipment.armor;
+            if (armor) {
+                // No durability for armor
+                armorSlot.innerHTML = `<span>${armor.name}</span>`;
+                armorSlot.classList.add('filled');
+                // Tooltip events
+                armorSlot.onmouseenter = (e) => showTooltip(armor, e);
+                armorSlot.onmouseleave = hideTooltip;
+                armorSlot.onmousemove = (e) => moveTooltip(e);
+            } else {
+                armorSlot.innerHTML = '[ Empty ]';
+                armorSlot.classList.remove('filled');
+                armorSlot.onmouseenter = null;
+                armorSlot.onmouseleave = null;
+                armorSlot.onmousemove = null;
+            }
+        }
+
+
+        /**
+         * Updates the Inventory UI
+         */
+        function updateInventoryUI() {
+            inventoryList.innerHTML = ''; // Clear list
+            if (player.inventory.length === 0) {
+                inventoryList.innerHTML = '<li class="text-gray-500 italic">...empty...</li>';
+                return;
+            }
+
+            player.inventory.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'inventory-item';
+                
+                let text = item.name;
+                // Show durability in inventory only for melee weapons
+                if (item.weaponType === 'melee' && item.stats.Durability) {
+                    text += ` (DUR: ${item.durability}/${item.stats.Durability})`;
+                }
+                
+                li.textContent = text;
+                li.onclick = () => handleInventoryClick(index); // Use central handler
+
+                // Tooltip events (NEW)
+                li.onmouseenter = (e) => showTooltip(item, e);
+                li.onmouseleave = hideTooltip;
+                li.onmousemove = (e) => moveTooltip(e); // Added mousemove
+
+                inventoryList.appendChild(li);
+            });
+        }
+        
+        // --- TOOLTIP FUNCTIONS (NEW) ---
+
+        /**
+         * Shows the item tooltip
+         * @param {object} item - The game item object
+         * @param {MouseEvent} event - The mouse event
+         */
+        function showTooltip(item, event) {
+            if (!item) return;
+
+            tooltipTitle.textContent = item.name;
+            tooltipTitle.className = `perk-rarity-${item.tier === 3 ? 'LEGENDARY' : item.tier === 2 ? 'RARE' : 'COMMON'}`; // Color by tier
+            
+            let statsHTML = '';
+            
+            if (item.type === 'weapon') {
+                statsHTML += `<span class="stat-name">Damage</span> <span class="stat-value">${item.stats.Damage}</span>`;
+                statsHTML += `<span class="stat-name">Type</span> <span class="stat-value">${item.damageType}</span>`;
+                if (item.stats.Durability) {
+                    statsHTML += `<span class="stat-name">Durability</span> <span class="stat-value">${item.durability}/${item.stats.Durability}</span>`;
+                }
+            } else if (item.type === 'armor') {
+                statsHTML += `<span class="stat-name">Physical DR</span> <span class="stat-value">${item.stats.PhysicalDR}</span>`;
+                statsHTML += `<span class="stat-name">Energy DR</span> <span class="stat-value">${item.stats.EnergyDR}</span>`;
+                statsHTML += `<span class="stat-name">Rad DR</span> <span class="stat-value">${item.stats.RadDR}</span>`;
+            } else {
+                statsHTML = `<span class="col-span-2">${item.description || 'A valuable bunker item.'}</span>`;
+            }
+
+            tooltipBody.innerHTML = statsHTML;
+            tooltipTier.textContent = `Tier ${item.tier || '?'}`;
+
+            // Position the tooltip
+            moveTooltip(event); // Use the new move function
+            itemTooltip.style.display = 'block';
+        }
+
+        /**
+         * Hides the item tooltip
+         */
+        function hideTooltip() {
+            itemTooltip.style.display = 'none';
+        }
+
+        /**
+         * Moves the tooltip to follow the mouse
+         */
+        function moveTooltip(event) {
+            if (itemTooltip.style.display !== 'block') return;
+
+            // Position tooltip 10px below and to the right of the cursor
+            let x = event.clientX + 10;
+            let y = event.clientY + 10;
+
+            // Prevent tooltip from going off-screen
+            if (x + itemTooltip.offsetWidth + 20 > window.innerWidth) {
+                x = event.clientX - itemTooltip.offsetWidth - 10; // Flip to left
+            }
+            if (y + itemTooltip.offsetHeight + 20 > window.innerHeight) {
+                y = event.clientY - itemTooltip.offsetHeight - 10; // Flip to top
+            }
+
+            itemTooltip.style.left = `${x}px`;
+            itemTooltip.style.top = `${y}px`;
+        }
+
+
+        /**
+         * Adds a message to the game log
+         */
+        function addLog(message, type = 'game') {
+            if (type === 'system') {
+                console.log(message); 
+                return;
+            }
+            
+            gameLog.unshift({ text: message, type: type }); 
+            if (gameLog.length > 20) {
+                gameLog.pop(); 
+            }
+
+            // Update log container
+            logContainer.innerHTML = ''; // Clear
+            gameLog.forEach(msg => {
+                const div = document.createElement('div');
+                div.textContent = `> ${msg.text}`;
+                if (msg.type === 'crit-hit') {
+                    div.className = 'crit-hit';
+                } else if (msg.type === 'perk') {
+                    div.className = 'perk-log';
+                }
+                logContainer.appendChild(div);
+            });
+        }
+
+        // --- INITIALIZATION ---
+
+        /**
+         * Starts the game
+         */
+        function init() {
+            // Set canvas font properties (must be done *after* loading)
+            ctx.font = `${TILE_SIZE}px 'Roboto Mono'`;
+            ctx.textBaseline = 'top';
+
+            // Add input listener
+            window.addEventListener('keydown', handleInput);
+
+            // --- REMOVED STARTING ITEMS ---
+            // player.inventory.push(createItemInstance(ITEMS.RUSTY_PIPE));
+            // player.inventory.push(createItemInstance(ITEMS.PIPE_PISTOL));
+            // player.inventory.push(createItemInstance(ITEMS.RAG_TUNIC));
+            // -----------------------------
+
+            // Create the first level
+            createDungeon();
+            
+            // Draw the initial game state
+            drawGame();
+        }
+
+        // Wait for fonts to load before starting
+        document.fonts.ready.then(() => {
+            init();
+        });
+
+    </script>
+</body>
+</html>
