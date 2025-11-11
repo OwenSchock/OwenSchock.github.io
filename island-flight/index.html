@@ -833,13 +833,13 @@
         let jobUi, jobObjectiveElement, jobTimerElement;
 
         // --- Game Parameters ---
-        let basePlaneSpeed = 1500; 
+        let basePlaneSpeed = 200; 
         let pitchSpeed = 0.6;   
         let yawSpeed = 0.9;     
         let rollSpeed = 0.72;   
         let brakingForce = 60; // NEW: Braking power
         
-        const maxPlaneSpeed = 2000;
+        const maxPlaneSpeed = 500;
         const speedBoostAmount = 180;
         const speedDecay = 36;
         const ringCollisionRadius = 45;
@@ -2234,7 +2234,7 @@
         function createOcean() {
             const oceanGeometry = new THREE.PlaneGeometry(20000, 20000);
             const oceanMaterial = new THREE.MeshPhongMaterial({ 
-                color: a52a2a, 
+                color: 0x3377aa, 
                 shininess: 50
             });
             ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
