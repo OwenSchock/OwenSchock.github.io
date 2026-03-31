@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UARK Prospective Student Portal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* Light Theme Variables */
+            --uark-red: #9D2235;
+            --uark-dark: #6b1724;
+            --bg-light: #f4f6f9;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --card-bg: #ffffff;
+            --border-light: #e0e0e0;
+            --border-radius: 8px;
+            --transition: all 0.25s ease;
+            --shadow: 0 8px 20px rgba(0,0,0,0.06);
+            --shadow-hover: 0 12px 25px rgba(0,0,0,0.1);
+            --icon-bg: #fdf2f4;
+            --course-hover: #e9ecef;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Variables */
+            --bg-light: #121212;
+            --text-main: #f0f0f0;
+            --text-muted: #aaaaaa;
+            --card-bg: #1e1e1e;
+            --border-light: #333333;
+            --shadow: 0 8px 20px rgba(0,0,0,0.4);
+            --shadow-hover: 0 12px 25px rgba(0,0,0,0.6);
+            --icon-bg: #2a090e;
+            --course-hover: #2d2d2d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            padding-bottom: 80px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Navigation */
+        header {
+            background-color: var(--card-bg);
+            padding: 18px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 10px rgba(0,0,0,0.08);
+            border-bottom: 3px solid var(--uark-red);
+            transition: background-color 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--uark-red);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-greeting {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            color: var(--uark-red);
+        }
+
+        /* Hero / Search Section */
+        .hero {
+            background: linear-gradient(135deg, #9D2235 0%, #4a1019 100%);
+            color: white;
+            padding: 70px 5%;
+            text-align: center;
+            border-bottom: 4px solid var(--card-bg);
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            font-weight: 300;
+            margin-bottom: 35px;
+            color: #f0f0f0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-container {
+            max-width: 650px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--uark-red);
+            pointer-events: none;
+        }
+
+        select {
+            width: 100%;
+            padding: 20px 25px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            appearance: none;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            cursor: pointer;
+            outline: none;
+            font-weight: 500;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Dashboard Grid & Loader */
+        .container {
+            max-width: 1300px;
+            margin: -35px auto 0;
+            padding: 0 2%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .loader-container {
+            display: none;
+            text-align: center;
+            padding: 60px 0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(157, 34, 53, 0.2);
+            border-top: 4px solid var(--uark-red);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 35px 30px;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--border-light);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card.highlight {
+            border-top-color: var(--uark-red);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--uark-red);
+            margin-bottom: 20px;
+            background: var(--icon-bg);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .card-title {
+            color: var(--text-main);
+            margin-bottom: 12px;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .card-content {
+            flex-grow: 1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        /* Interactive Course List */
+        .course-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .course-list li {
+            background-color: var(--bg-light);
+            margin-bottom: 8px;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border-left: 3px solid var(--uark-red);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .course-list li:hover {
+            background-color: var(--course-hover);
+        }
+
+        .course-list li i {
+            color: var(--text-muted);
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+
+        .course-list li.completed {
+            background-color: rgba(46, 125, 50, 0.1);
+            border-left-color: #2e7d32;
+            color: #2e7d32;
+            text-decoration: line-through;
+        }
+
+        .course-list li.completed i {
+            color: #2e7d32;
+            opacity: 1;
+        }
+
+        /* Tags and Buttons */
+        .tag {
+            display: inline-block;
+            background-color: var(--icon-bg);
+            color: var(--uark-red);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background-color 0.3s;
+        }
+
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 14px;
+            margin-top: 25px;
+            background-color: transparent;
+            border: 2px solid var(--border-light);
+            color: var(--text-main);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-align: center;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            border-color: var(--uark-red);
+            color: var(--uark-red);
+        }
+
+        .btn-primary {
+            background-color: var(--uark-red);
+            color: white;
+            border-color: var(--uark-red);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--uark-dark);
+            color: white;
+            border-color: var(--uark-dark);
+        }
+
+        /* Tuition Toggle Switch */
+        .tuition-toggle-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--uark-red);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .tuition-amount {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--uark-red);
+            margin-bottom: 5px;
+        }
+
+        /* Custom Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            color: #2e7d32;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .modal-text {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        /* Live Chat Widget */
+        .chat-widget-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background-color: var(--uark-red);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(157, 34, 53, 0.4);
+            z-index: 999;
+            transition: transform 0.3s;
+        }
+
+        .chat-widget-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 320px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-light);
+            z-index: 999;
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .chat-window.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .chat-header {
+            background-color: var(--uark-red);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header i {
+            cursor: pointer;
+        }
+
+        .chat-body {
+            padding: 20px;
+        }
+
+        .chat-message {
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            padding: 15px;
+            border-radius: 8px 8px 8px 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .chat-input-area input {
+            flex-grow: 1;
+            border: none;
+            padding: 15px;
+            background: transparent;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        .chat-input-area button {
+            background: transparent;
+            border: none;
+            color: var(--uark-red);
+            padding: 0 15px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-building-columns"></i>
+            University of Arkansas Admissions
+        </div>
+        <div class="header-controls">
+            <div class="user-greeting">
+                <i class="fa-regular fa-circle-user"></i>
+                Welcome, Future Razorback
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fa-solid fa-moon" id="theme-icon"></i>
+            </button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Find Your Path at Arkansas</h1>
+        <p>Select a degree program below to instantly view program details, required freshman courses, and your next steps.</p>
+        <div class="search-container">
+            <div class="select-wrapper">
+                <select id="major-select" onchange="triggerUpdateDashboard()">
+                    <option value="default" disabled selected>Search or Select a Degree Program...</option>
+                    <option value="dtsc">Data Science (B.S.)</option>
+                    <option value="scmt">Supply Chain Management (B.S.B.A.)</option>
+                    <option value="nurs">Nursing (B.S.N.)</option>
+                    <option value="arch">Architecture (B.Arch)</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="loader-container" id="loader">
+            <div class="spinner"></div>
+            <p style="color: var(--text-muted); font-weight: 500;">Querying Centralized University Database...</p>
+        </div>
+
+        <div class="dashboard-grid" id="dashboard-content" style="display: none;">
+            
+            <div class="card highlight fade-in">
+                <div class="card-icon"><i class="fa-solid fa-sitemap"></i></div>
+                <h3 class="card-title" id="overview-title">Program Overview</h3>
+                <div class="card-content">
+                    <span class="tag" id="college-tag">College</span>
+                    <p id="major-desc" style="color: var(--text-main);">Description goes here.</p>
+                    <br>
+                    <strong style="color: var(--text-main);">Top Career Paths:</strong>
+                    <p id="career-paths" style="margin-top: 5px;"></p>
+                </div>
+            </div>
+
+            <div class="card highlight fade-in" style="animation-delay: 0.1s;">
+                <div class="card-icon"><i class="fa-solid fa-book-open-reader"></i></div>
+                <h3 class="card-title">Freshman Core Courses</h3>
+                <div class="card-content">
+                    <p>Click a class below to simulate degree tracking:</p>
+                    <ul class="course-list" id="course-list">
+                        </ul>
+                </div>
+                <button class="btn" onclick="openModal('Degree Planner', 'This would route the student to a fully interactive 8-semester drag-and-drop course planner.')">View 4-Year Academic Plan</button>
+            </div>
+
+            <div class="card fade-in" style="animation-delay: 0.2s;">
+                <div class="card-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                <h3 class="card-title">Tuition & Financial Aid</h3>
+                <div class="card-content">
+                    <div class="tuition-toggle-wrapper">
+                        <span class="toggle-label" id="residency-label">In-State Tuition</span>
+                        <label class="switch">
+                            <input type="checkbox" id="tuition-toggle" onchange="toggleTuition()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="tuition-amount" id="tuition-display">$9,850 <span style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">/ year</span></div>
+                    
+                    <ul style="margin-top: 15px; padding-left: 20px;">
+                        <li><strong>New Arkansan NRTA:</strong> Out-of-state tuition award (70-90% coverage).</li>
+                        <li><strong>Arkansas Academic Challenge:</strong> State lottery-funded scholarship.</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('Scholarship Portal', 'This links directly to the centralized Academic Scholarship portal. No physical QR codes required!')">Apply for Freshman Aid</button>
+            </div>
+
+            <div class="card fade-in" style="animation-delay: 0.3s;">
+                <div class="card-icon"><i class="fa-regular fa-calendar-check"></i></div>
+                <h3 class="card-title">Your Next Steps</h3>
+                <div class="card-content">
+                    <strong style="color: var(--text-main);">Have questions about this major?</strong><br>
+                    Connect with an admissions counselor specializing in the <span id="advising-college" style="font-weight: 600;">College</span>.<br><br>
+                    <em>Applications for the upcoming Fall semester are currently open.</em>
+                </div>
+                <button class="btn" onclick="openModal('Campus Tours', 'This opens a scheduling integration allowing students to easily book a tour of the specific college facilities.')">Schedule a Campus Tour</button>
+                <button class="btn btn-primary" onclick="openModal('Application Started', 'This securely routes the student to the official UARK application portal, pre-filling their selected major.')">Start Application</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="chat-widget-btn" onclick="toggleChat()">
+        <i class="fa-regular fa-comments"></i>
+    </div>
+    <div class="chat-window" id="chat-window">
+        <div class="chat-header">
+            <span><i class="fa-solid fa-headset" style="margin-right: 8px;"></i> Live Support</span>
+            <i class="fa-solid fa-xmark" onclick="toggleChat()"></i>
+        </div>
+        <div class="chat-body">
+            <div class="chat-message" id="chat-greeting">
+                Hi! I'm an admissions ambassador. Need any help navigating the site?
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" placeholder="Type your message..." id="chat-input">
+            <button onclick="document.getElementById('chat-input').value = ''; openModal('Chat Submitted', 'In the full version, this routes directly to the university\'s Zendesk or live ambassador platform.')">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="custom-modal">
+        <div class="modal-content">
+            <div class="modal-icon"><i class="fa-regular fa-circle-check"></i></div>
+            <h2 class="modal-title" id="modal-title">Action Successful</h2>
+            <p class="modal-text" id="modal-text">Details about the action go here.</p>
+            <button class="btn btn-primary" onclick="closeModal()">Close & Return</button>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle Logic (Dark/Light Mode)
+        function toggleTheme() {
+            const htmlEl = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            
+            if (htmlEl.getAttribute('data-theme') === 'light') {
+                htmlEl.setAttribute('data-theme', 'dark');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                htmlEl.setAttribute('data-theme', 'light');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        // Live Chat Toggle Logic
+        function toggleChat() {
+            document.getElementById('chat-window').classList.toggle('active');
+        }
+
+        // Simulated Database of UARK Majors
+        const majorsDatabase = {
+            dtsc: {
+                title: "Data Science (B.S.)",
+                college: "College of Engineering / Interdisciplinary",
+                desc: "Data scientists make sense of huge sets of data to help businesses, governments, and organizations make smarter decisions. This interdisciplinary program combines computing, statistics, and business logic.",
+                careers: "Data Analyst, Machine Learning Engineer, Database Administrator",
+                courses: [
+                    "DASC 10003 - Intro to Data Science",
+                    "DASC 12004 - Programming in Python",
+                    "DASC 25904 - Multivariable Math",
+                    "ISYS 42803 - Business Database Management"
+                ]
+            },
+            scmt: {
+                title: "Supply Chain Management (B.S.B.A.)",
+                college: "Sam M. Walton College of Business",
+                desc: "Consistently ranked among the top in the nation, this program teaches you how to manage the flow of goods, services, and information globally. Learn from industry leaders right in the retail capital of the world.",
+                careers: "Logistics Manager, Procurement Analyst, Operations Director",
+                courses: [
+                    "SCMT 21003 - Intro to Supply Chain Management",
+                    "ECON 21003 - Principles of Macroeconomics",
+                    "WCOB 11101 - Freshman Business Connections",
+                    "ACCT 20103 - Accounting Principles"
+                ]
+            },
+            nurs: {
+                title: "Nursing (B.S.N.)",
+                college: "College of Education and Health Professions",
+                desc: "A highly competitive, rigorous program designed to prepare compassionate and highly skilled registered nurses. Features extensive clinical hours and state-of-the-art simulation labs.",
+                careers: "Registered Nurse (RN), Clinical Care Coordinator, Nurse Educator",
+                courses: [
+                    "BIOL 24003 - Human Anatomy",
+                    "BIOL 20003 - General Microbiology",
+                    "CHEM 12103 - Chemistry for Majors I",
+                    "NURS 20102 - Intro to the Profession of Nursing"
+                ]
+            },
+            arch: {
+                title: "Architecture (B.Arch)",
+                college: "Fay Jones School of Architecture and Design",
+                desc: "A five-year professional degree program focusing on design excellence, sustainability, and the physical built environment. Studio culture is at the heart of this immersive program.",
+                careers: "Licensed Architect, Urban Designer, Sustainability Consultant",
+                courses: [
+                    "ARCH 10003 - Architectural Design Studio I",
+                    "ARCH 12102 - Design Thinking I",
+                    "MATH 11003 - College Algebra",
+                    "PHYS 20103 - College Physics I"
+                ]
+            }
+        };
+
+        // Loading State Simulation before updating dashboard
+        function triggerUpdateDashboard() {
+            const select = document.getElementById('major-select');
+            if(select.value === 'default') return;
+
+            const dashboard = document.getElementById('dashboard-content');
+            const loader = document.getElementById('loader');
+
+            // Hide dashboard, show loader
+            dashboard.style.display = 'none';
+            loader.style.display = 'block';
+
+            // Simulate a 0.8 second database query delay
+            setTimeout(() => {
+                loader.style.display = 'none';
+                updateDashboard();
+            }, 800);
+        }
+
+        function updateDashboard() {
+            const select = document.getElementById('major-select');
+            const selectedMajor = select.value;
+            const dashboard = document.getElementById('dashboard-content');
+            const data = majorsDatabase[selectedMajor];
+
+            // Display grid
+            dashboard.style.display = 'grid';
+
+            // Reset animations
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.classList.remove('fade-in');
+                void card.offsetWidth; 
+                card.classList.add('fade-in');
+            });
+
+            // Populate data
+            document.getElementById('overview-title').innerText = data.title;
+            document.getElementById('college-tag').innerText = data.college;
+            document.getElementById('major-desc').innerText = data.desc;
+            document.getElementById('career-paths').innerText = data.careers;
+            document.getElementById('advising-college').innerText = data.college;
+
+            // Personalize the Chat Widget message
+            document.getElementById('chat-greeting').innerHTML = `Hi! I'm a student ambassador for the <strong>${data.college}</strong>. Do you have any questions about the ${data.title} program?`;
+
+            // Generate interactive course list
+            const courseList = document.getElementById('course-list');
+            courseList.innerHTML = ''; 
+            data.courses.forEach(course => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="fa-regular fa-circle"></i> ${course}`;
+                
+                li.onclick = function() {
+                    this.classList.toggle('completed');
+                    const icon = this.querySelector('i');
+                    if (this.classList.contains('completed')) {
+                        icon.classList.remove('fa-circle');
+                        icon.classList.add('fa-circle-check');
+                    } else {
+                        icon.classList.remove('fa-circle-check');
+                        icon.classList.add('fa-circle');
+                    }
+                };
+                
+                courseList.appendChild(li);
+            });
+        }
+
+        // Tuition Toggle Logic
+        function toggleTuition() {
+            const toggle = document.getElementById('tuition-toggle');
+            const display = document.getElementById('tuition-display');
+            const label = document.getElementById('residency-label');
+            
+            if(toggle.checked) {
+                display.innerHTML = '$28,314 <span style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">/ year</span>';
+                label.innerText = "Out-of-State Tuition";
+            } else {
+                display.innerHTML = '$9,850 <span style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">/ year</span>';
+                label.innerText = "In-State Tuition";
+            }
+        }
+
+        // Modal Logic
+        function openModal(title, text) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerText = text;
+            document.getElementById('custom-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
