@@ -1,17 +1,437 @@
 ---
-
+import '../styles/global.css';
+import TableauEmbed from '../components/TableauEmbed.astro';
 ---
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Owen Schock | Portfolio</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="bg-slate-950 text-slate-300 font-sans antialiased selection:bg-cyan-500 selection:text-white">
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+    <nav class="fixed w-full top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex-shrink-0 font-bold text-xl text-white tracking-wider">
+            &lt;Owen /&gt;
+          </div>
+          <div class="hidden md:block">
+            <div class="ml-10 flex items-baseline space-x-8">
+              <a href="#about" class="hover:text-cyan-400 transition-colors">About</a>
+              <a href="#skills" class="hover:text-cyan-400 transition-colors">Skills</a>
+              <a href="#projects" class="hover:text-cyan-400 transition-colors">Work</a>
+              <a href="#contact" class="hover:text-cyan-400 transition-colors">Contact</a>
+              <a href="/resume.pdf" class="px-4 py-2 rounded-md border border-cyan-500 text-cyan-500 hover:bg-cyan-500 hover:text-white transition-all">Resume</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="pt-32 pb-16 sm:pt-40 sm:pb-24 lg:pb-48 px-4 mx-auto max-w-6xl grid lg:grid-cols-2 gap-12 items-center min-h-[80vh]">
+      
+      <div class="z-10 relative">
+        <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight mb-6">
+          Hi, I'm <span class="text-cyan-500">Owen.</span>
+        </h1>
+        <p class="mt-4 text-xl sm:text-2xl text-slate-400 max-w-2xl leading-relaxed">
+          I build data-driven applications, interactive web experiences, and scalable database solutions.
+        </p>
+        
+        <div class="mt-10 flex gap-4">
+          <a href="#projects" class="px-8 py-3 rounded-lg bg-cyan-600 text-white font-medium hover:bg-cyan-500 transition-colors shadow-lg shadow-cyan-500/20">
+            View My Work
+          </a>
+          <a href="#contact" class="px-8 py-3 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors">
+            Get in Touch
+          </a>
+        </div>
+      </div>
+
+      <div class="hidden lg:block w-full h-[400px] xl:h-[500px] relative z-0" id="canvas-container">
+        <div class="absolute inset-0 bg-cyan-500/5 blur-[100px] rounded-full"></div>
+        <canvas id="networkCanvas" class="absolute inset-0 w-full h-full"></canvas>
+      </div>
+
+    </main>
+<section id="about" class="py-20 bg-slate-900 border-t border-slate-800">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-white mb-10 inline-block border-b-4 border-cyan-500 pb-2">About Me</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div class="order-2 md:order-1 text-slate-300 text-lg leading-relaxed space-y-6">
+            <p>
+              I grew up in Mandeville, Louisiana, and made my way to the University of Arkansas specifically drawn to their Data Science program. I'm currently working through my core data science and supply chain management courses, blending quantitative analysis with real-world logistical problem-solving.
+            </p>
+            <p>
+              I've always appreciated environments that value structure, clear organization, and competent leadership. Whether I'm designing a database schema or writing SQL stored procedures, I believe that well-structured code and a solid architectural plan are the backbone of any good project.
+            </p>
+            <p>
+              Outside of my coursework, I spend a lot of my free time working on passion projects—which is really what this entire website is a collection of. From building interactive web games from scratch to spinning up data-driven dashboards, I just genuinely enjoy taking an idea and writing the logic to bring it to life.
+            </p>
+          </div>
+          <div class="order-1 md:order-2 flex justify-center">
+            <img 
+              src="/headshot.jpg" 
+              alt="Owen Schock" 
+              class="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl object-cover border-4 border-slate-800 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-300"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="skills" class="py-20 bg-slate-950">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-white mb-12 inline-block border-b-4 border-cyan-500 pb-2">Technical Arsenal</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <div class="p-8 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-cyan-500/50 transition-colors shadow-lg">
+            <h3 class="text-xl font-bold text-cyan-400 mb-4 flex items-center gap-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              Data & Geospatial
+            </h3>
+            <ul class="space-y-3 text-slate-400 font-medium">
+              <li>Python & R</li>
+              <li>QGIS Spatial Analysis</li>
+              <li>Tableau Dashboards</li>
+              <li>Statistical Modeling</li>
+            </ul>
+          </div>
+
+          <div class="p-8 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-cyan-500/50 transition-colors shadow-lg">
+            <h3 class="text-xl font-bold text-cyan-400 mb-4 flex items-center gap-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+              Backend & Databases
+            </h3>
+            <ul class="space-y-3 text-slate-400 font-medium">
+              <li>SQL & T-SQL</li>
+              <li>Relational Database Management</li>
+              <li>Stored Procedures</li>
+              <li>C# Integration</li>
+            </ul>
+          </div>
+
+          <div class="p-8 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-cyan-500/50 transition-colors shadow-lg">
+            <h3 class="text-xl font-bold text-cyan-400 mb-4 flex items-center gap-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+              Web & Interactive
+            </h3>
+            <ul class="space-y-3 text-slate-400 font-medium">
+              <li>Vanilla JavaScript</li>
+              <li>HTML5 & CSS</li>
+              <li>Astro & Tailwind CSS</li>
+              <li>Game Loop Logic</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+	<section id="projects" class="py-20 bg-slate-900 border-t border-slate-800">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-white mb-12 inline-block border-b-4 border-cyan-500 pb-2">Featured Projects</h2>
+        
+        <div class="space-y-12">
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-slate-950/50 p-6 sm:p-8 rounded-2xl border border-slate-800 hover:border-cyan-500/30 transition-all duration-300">
+            <div class="aspect-video bg-slate-800 rounded-xl border border-slate-700 overflow-hidden group relative">
+              <img src="/logistics.png" alt="Logistics AI Dashboard" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition-colors duration-500"></div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex gap-2 text-xs font-mono text-cyan-400 mb-2">
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Python</span>
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">AI / ML</span>
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Data Visualization</span>
+              </div>
+              <h3 class="text-2xl font-bold text-white">Logistics-AI Dashboard</h3>
+              <p class="text-slate-400 leading-relaxed">
+                An advanced analytics dashboard leveraging artificial intelligence to process and visualize complex logistical data, designed to optimize routing and operational efficiency. 
+                <br/><br/>
+                <span class="flex items-start gap-2 text-sm text-cyan-500/80 italic mt-2">
+                  <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Visit my GitHub repository for a comprehensive technical breakdown and to download the sample dataset used in this deployment.
+                </span>
+              </p>
+              <a href="https://logistics-ai-dashboard.vercel.app/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-cyan-500 hover:text-cyan-400 font-medium group">
+                View Live Deployment 
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7-7m7-7H3"></path></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-slate-950/50 p-6 sm:p-8 rounded-2xl border border-slate-800 hover:border-cyan-500/30 transition-all duration-300">
+            <div class="order-1 lg:order-2 aspect-video bg-slate-800 rounded-xl border border-slate-700 overflow-hidden group relative">
+              <img src="/nwa.png" alt="NWA Retail Gap Analyzer" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition-colors duration-500"></div>
+            </div>
+            <div class="order-2 lg:order-1 space-y-4">
+              <div class="flex gap-2 text-xs font-mono text-cyan-400 mb-2">
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Geospatial Data</span>
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Market Analytics</span>
+              </div>
+              <h3 class="text-2xl font-bold text-white">NWA-Retail Gap Analyzer</h3>
+              <p class="text-slate-400 leading-relaxed">
+                A targeted geospatial analysis engine designed to evaluate the commercial landscape of Northwest Arkansas, utilizing coffee shop locations as a primary data model. This project leverages spatial data to answer two critical business questions: <em>What geographical factors drive a location's success?</em> and <em>Where are the most viable, untapped market gaps for new developments?</em>
+                <br/><br/>
+                <span class="flex items-start gap-2 text-sm text-cyan-500/80 italic mt-2">
+                  <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Visit my GitHub repository for an in-depth explanation of the methodology and spatial algorithms.
+                </span>
+              </p>
+              <a href="https://owenschock.github.io/nwa-retail-gap-analyzer/NWA_Final_Analysis.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-cyan-500 hover:text-cyan-400 font-medium group">
+                View Live Deployment 
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7-7m7-7H3"></path></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-8 bg-slate-950/50 p-6 sm:p-8 rounded-2xl border border-slate-800 hover:border-cyan-500/30 transition-all duration-300">
+            <div class="space-y-4">
+              <div class="flex gap-2 text-xs font-mono text-cyan-400 mb-2">
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Tableau</span>
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Macroeconomics</span>
+              </div>
+              <h3 class="text-2xl font-bold text-white flex items-center gap-3">
+                Country Performance Tracker
+                <span class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                </span>
+              </h3>
+              <p class="text-slate-400 leading-relaxed max-w-4xl">
+                An interactive, live data visualization dashboard architected in Tableau. This tracker synthesizes global macroeconomic metrics to provide real-time comparative analysis of country-level performance indicators. 
+              </p>
+            </div>
+            <div class="w-full">
+              <TableauEmbed url="https://public.tableau.com/views/CountryPerformanceTracker/CountryPerformanceTracker?:showVizHome=no&:embed=true" />
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-8 bg-slate-950/50 p-6 sm:p-8 rounded-2xl border border-slate-800 hover:border-cyan-500/30 transition-all duration-300">
+            <div class="space-y-4">
+              <div class="flex gap-2 text-xs font-mono text-cyan-400 mb-2">
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Python API</span>
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Sports Analytics</span>
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Hex Binning</span>
+              </div>
+              <h3 class="text-2xl font-bold text-white flex items-center gap-3">
+                The Death of the Mid-Range: NBA Evolution
+                <span class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                </span>
+              </h3>
+              <p class="text-slate-400 leading-relaxed max-w-4xl">
+                A data-driven narrative exploring the strategic shift in NBA shot selection. Leveraging a Python API to scrape historical location data, this dashboard utilizes hexagonal binning to visually contrast the 2004-05 and 2024-25 seasons, illustrating the league's systemic abandonment of the mid-range jumper in favor of high-efficiency three-pointers and paint attempts.
+                <br/><br/>
+                <span class="flex items-center gap-2 text-sm text-cyan-500/80 italic">
+                  <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                  This is a long-form report. Scroll inside the dashboard below to view the full spatial analysis.
+                </span>
+              </p>
+            </div>
+            <div class="w-full">
+              <TableauEmbed url="https://public.tableau.com/shared/3452ZNWT5?:showVizHome=no&:embed=true" />
+            </div>
+          </div>
+
+          <div class="p-8 rounded-2xl bg-cyan-950/20 border border-cyan-900/50 text-center space-y-4 mt-8">
+            <h3 class="text-2xl font-bold text-white">Interactive Web Games</h3>
+            <p class="text-slate-400 max-w-2xl mx-auto">
+              Beyond data and backend architecture, I also build custom, browser-based games from scratch using HTML5 Canvas and pure JavaScript.
+            </p>
+            <a href="/games" class="inline-flex px-8 py-3 mt-4 rounded-lg bg-cyan-600 text-white font-medium hover:bg-cyan-500 transition-colors shadow-lg shadow-cyan-500/20">
+              Explore My Games Collection
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+	<section class="py-20 bg-slate-950">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-white mb-12 inline-block border-b-4 border-cyan-500 pb-2">More Repositories</h2>
+        
+        <div id="github-repos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <p class="text-slate-500 col-span-full text-center animate-pulse">Loading repositories from GitHub...</p>
+        </div>
+      </div>
+    </section>
+
+    <footer id="contact" class="py-12 bg-slate-900 border-t border-slate-800 text-center">
+      <div class="max-w-4xl mx-auto px-4">
+        <h2 class="text-2xl font-bold text-white mb-6">Let's Connect</h2>
+        <p class="text-slate-400 mb-8">Whether you have a question about my data models, game logic, or just want to say hi, my inbox is open.</p>
+        <a href="mailto:oschock@uark.edu" class="inline-block px-8 py-3 rounded-lg bg-cyan-600 text-white font-medium hover:bg-cyan-500 transition-colors shadow-lg shadow-cyan-500/20 mb-12">
+          Say Hello
+        </a>
+        <p class="text-sm text-slate-500">
+          Built with Astro & Vanilla JS. Hosted on GitHub Pages. <br/>
+          &copy; <span id="year"></span> Owen Schock.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // 1. Set the current year in the footer dynamically
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // 2. Fetch Repositories from GitHub API
+      async function fetchRepos() {
+        const container = document.getElementById('github-repos');
+        // Fetch your public repos, sorted by recently updated, limit to 6
+        const apiUrl = 'https://api.github.com/users/OwenSchock/repos?sort=updated&per_page=6';
+        
+        try {
+          const response = await fetch(apiUrl);
+          if (!response.ok) throw new Error('Network response was not ok');
+          const repos = await response.json();
+
+          // Clear the "Loading..." text
+          container.innerHTML = '';
+
+          // Loop through the data and build HTML for each repo
+          repos.forEach(repo => {
+            const card = `
+              <a href="${repo.html_url}" target="_blank" rel="noopener noreferrer" class="flex flex-col p-6 bg-slate-900/50 rounded-xl border border-slate-800 hover:border-cyan-500/50 hover:-translate-y-1 transition-all duration-300 shadow-lg group">
+                <div class="flex justify-between items-start mb-4">
+                  <svg class="w-8 h-8 text-cyan-500 group-hover:text-cyan-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2 truncate">${repo.name}</h3>
+                <p class="text-slate-400 text-sm mb-6 flex-grow opacity-80">${repo.description || 'No description provided.'}</p>
+                <div class="text-xs font-mono text-cyan-400 mt-auto flex items-center justify-between">
+                  ${repo.language ? `<span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">${repo.language}</span>` : '<span class="text-slate-600">Mixed</span>'}
+                  <span class="text-slate-500 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    ${repo.stargazers_count}
+                  </span>
+                </div>
+              </a>
+            `;
+            container.innerHTML += card;
+          });
+        } catch (error) {
+          container.innerHTML = '<p class="text-slate-500 col-span-full text-center">Failed to load repositories. Check back later.</p>';
+        }
+      }
+
+      // Run the function when the page loads
+      fetchRepos();
+      // --- 3. Interactive Data Constellation Animation ---
+      const canvas = document.getElementById('networkCanvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+
+        // Set canvas dimensions to match its container
+        let width = container.clientWidth;
+        let height = container.clientHeight;
+        canvas.width = width;
+        canvas.height = height;
+
+        let particles = [];
+        const mouse = { x: null, y: null };
+
+        // Track mouse position over the canvas
+        canvas.addEventListener('mousemove', (e) => {
+          const rect = canvas.getBoundingClientRect();
+          mouse.x = e.clientX - rect.left;
+          mouse.y = e.clientY - rect.top;
+        });
+        canvas.addEventListener('mouseleave', () => {
+          mouse.x = null;
+          mouse.y = null;
+        });
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+          width = container.clientWidth;
+          height = container.clientHeight;
+          canvas.width = width;
+          canvas.height = height;
+          initParticles();
+        });
+
+        // The Node Class
+        class Particle {
+          constructor() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * 0.8; // Drift speed
+            this.vy = (Math.random() - 0.5) * 0.8;
+            this.radius = Math.random() * 1.5 + 0.5;
+          }
+          update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            // Bounce off edges
+            if (this.x < 0 || this.x > width) this.vx *= -1;
+            if (this.y < 0 || this.y > height) this.vy *= -1;
+          }
+          draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.7)'; // Cyan
+            ctx.fill();
+          }
+        }
+
+        function initParticles() {
+          particles = [];
+          // Amount of nodes
+          for (let i = 0; i < 60; i++) {
+            particles.push(new Particle());
+          }
+        }
+
+        function animateConstellation() {
+          ctx.clearRect(0, 0, width, height);
+          
+          for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+            
+            // Draw connections between nearby nodes
+            for (let j = i; j < particles.length; j++) {
+              const dx = particles[i].x - particles[j].x;
+              const dy = particles[i].y - particles[j].y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              
+              if (distance < 80) {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(6, 182, 212, ${1 - distance/80})`; 
+                ctx.lineWidth = 0.5;
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.stroke();
+              }
+            }
+            
+            // Draw interactive connection to mouse cursor
+            if (mouse.x != null) {
+              const dx = particles[i].x - mouse.x;
+              const dy = particles[i].y - mouse.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              
+              if (distance < 140) {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(6, 182, 212, ${1 - distance/140})`;
+                ctx.lineWidth = 1;
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.stroke();
+              }
+            }
+          }
+          requestAnimationFrame(animateConstellation);
+        }
+
+        initParticles();
+        animateConstellation();
+      }
+    </script>
+  </body>
 </html>

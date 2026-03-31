@@ -1,0 +1,62 @@
+---
+import '../styles/global.css';
+---
+
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Owen Schock | Games</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="bg-slate-950 text-slate-300 font-sans antialiased selection:bg-cyan-500 selection:text-white">
+
+    <nav class="fixed w-full top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
+        <a href="/" class="flex items-center gap-2 text-cyan-500 hover:text-cyan-400 transition-colors font-medium">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          Back to Portfolio
+        </a>
+      </div>
+    </nav>
+
+    <main class="pt-32 pb-24 px-4 mx-auto max-w-6xl min-h-screen">
+      <div class="text-center mb-16">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">Interactive <span class="text-cyan-500">Games Arcade</span></h1>
+        <p class="text-xl text-slate-400 max-w-2xl mx-auto">A collection of custom-built, browser-based projects exploring game loops, collision detection, and user state management.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        
+        <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden hover:border-cyan-500/50 transition-colors group shadow-lg flex flex-col">
+          <div class="aspect-video bg-slate-800 relative overflow-hidden">
+            <img src="/temporle.png" alt="Temporle Gameplay" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div class="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors duration-500"></div>
+          </div>
+          <div class="p-6 flex flex-col flex-grow">
+            <h3 class="text-xl font-bold text-white mb-2">Temporle: Historical Mapping</h3>
+            <p class="text-slate-400 text-sm mb-6 flex-grow">A geographical deduction game where players identify historical civilizations. It utilizes era-based clues and a dynamic coordinate algorithm to provide directional compass hints based on the spatial proximity of prior guesses.</p>
+            <a href="https://owenschock.github.io/temporle/" target="_blank" rel="noopener noreferrer" class="block w-full text-center px-4 py-2 rounded bg-cyan-600 text-white hover:bg-cyan-500 transition-colors mt-auto font-medium shadow-lg shadow-cyan-900/20">
+              Play Temporle
+            </a>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden hover:border-cyan-500/50 transition-colors group shadow-lg flex flex-col">
+          <div class="aspect-video bg-slate-800 relative overflow-hidden">
+            <img src="/scale.png" alt="Universal Scale of Value Visualization" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div class="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors duration-500"></div>
+          </div>
+          <div class="p-6 flex flex-col flex-grow">
+            <h3 class="text-xl font-bold text-white mb-2">Universal Scale of Value</h3>
+            <p class="text-slate-400 text-sm mb-6 flex-grow">An interactive 3D visualization designed to conceptualize extreme magnitudes of wealth. This project leverages spatial rendering to put "billions" and "trillions" into perspective by comparing modern tech giants to historical empires.</p>
+            <a href="https://owenschock.github.io/universal-scale-of-value/" target="_blank" rel="noopener noreferrer" class="block w-full text-center px-4 py-2 rounded bg-cyan-600 text-white hover:bg-cyan-500 transition-colors mt-auto font-medium shadow-lg shadow-cyan-900/20">
+              View Visualization
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </body>
+</html>
