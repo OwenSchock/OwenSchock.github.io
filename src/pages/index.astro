@@ -23,7 +23,14 @@ import TableauEmbed from '../components/TableauEmbed.astro';
               <a href="#skills" class="hover:text-cyan-400 transition-colors">Skills</a>
               <a href="#projects" class="hover:text-cyan-400 transition-colors">Work</a>
               <a href="#contact" class="hover:text-cyan-400 transition-colors">Contact</a>
-              <a href="/resume.pdf" class="px-4 py-2 rounded-md border border-cyan-500 text-cyan-500 hover:bg-cyan-500 hover:text-white transition-all">Resume</a>
+              <a 
+                href="/owenresume.pdf" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                class="px-5 py-2 rounded-lg border border-cyan-500 text-cyan-400 font-medium hover:bg-cyan-500 hover:text-white hover:shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all duration-300"
+              >
+                Resume
+              </a>
             </div>
           </div>
         </div>
@@ -134,7 +141,29 @@ import TableauEmbed from '../components/TableauEmbed.astro';
         <h2 class="text-3xl font-bold text-white mb-12 inline-block border-b-4 border-cyan-500 pb-2">Featured Projects</h2>
         
         <div class="space-y-12">
-          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-slate-950/50 p-6 sm:p-8 rounded-2xl border border-slate-800 hover:border-cyan-500/30 transition-all duration-300">
+            <div class="aspect-video bg-slate-800 rounded-xl border border-slate-700 overflow-hidden group relative">
+              <img src="/mlb.png" alt="MLB Prop Prediction Engine" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition-colors duration-500"></div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex gap-2 text-xs font-mono text-cyan-400 mb-2">
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Predictive Modeling</span>
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">Data Engineering</span>
+                <span class="px-2 py-1 bg-cyan-950/50 rounded border border-cyan-900">React</span>
+              </div>
+              <h3 class="text-2xl font-bold text-white">MLB Prop Prediction Engine</h3>
+              <p class="text-slate-400 leading-relaxed">
+                An automated, serverless predictive engine designed to identify mathematical inefficiencies in daily MLB player prop markets. This pipeline ingests live Statcast data, applies a 45-day exponential time-decay to batter splits, and adjusts for real-time stadium park dimensions and thermodynamic factors to calculate true expected value (+EV).
+                <br/><br/>
+                
+              </p>
+              <a href="https://owenschock.github.io/mlb-prop-engine/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-cyan-500 hover:text-cyan-400 font-medium group">
+                View Live Deployment 
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7-7m7-7H3"></path></svg>
+              </a>
+            </div>
+          </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-slate-950/50 p-6 sm:p-8 rounded-2xl border border-slate-800 hover:border-cyan-500/30 transition-all duration-300">
             <div class="aspect-video bg-slate-800 rounded-xl border border-slate-700 overflow-hidden group relative">
               <img src="/logistics.png" alt="Logistics AI Dashboard" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
